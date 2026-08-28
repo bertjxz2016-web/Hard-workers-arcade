@@ -10,11 +10,23 @@ function installArcadeGames() {
       meta: 'REAL CIRCLE SCORING',
       preview: 'skee-preview'
     },
+    air: {
+      title: 'Air Hockey Blitz',
+      description: 'Fast reflex match against AI or a second player. Win by score before the clock runs out.',
+      meta: 'AI OR 2 PLAYER',
+      preview: 'air-preview'
+    },
     claw: {
       title: 'Claw Grab',
       description: 'Line up a narrow grab window and commit to the drop. The machine keeps its secrets.',
       meta: 'TIGHT GRAB WINDOW',
       preview: 'claw-preview'
+    },
+    coin: {
+      title: 'Coin Push',
+      description: 'Drop coins into the lanes and push prizes off the edge for a satisfying payout.',
+      meta: 'PRIZE PUSHER',
+      preview: 'coin-preview'
     },
     tower: {
       title: 'Crazy Tower',
@@ -143,8 +155,284 @@ function installArcadeGames() {
     cleanupGame();
     cleanupGame = () => {};
     if (game === 'skee') setupSkeeBall();
+    if (game === 'air') setupAirHockey();
     if (game === 'claw') setupClawGrab();
+    if (game === 'coin') setupCoinPush();
     if (game === 'tower') setupCrazyTower();
+  }
+
+  function setupAirHockey() {
+    arcadeBox.innerHTML =
+      topbar(true) +
+      '<section class="arcade-game">' +
+        '<div class="game-intro">' +
+          '<div><div class="kicker">REFLEX / FAST PLAY</div><h2>Air Hockey <span>Blitz</span></h2><p>Block the puck, chase the rebound, and race the clock. In AI mode the opponent reads the puck and in 2-player mode the second paddle uses the keyboard.</p></div>' +
+          '<div class="game-stats">' +
+            '<div class="game-stat"><b id="airPlayerScore">0</b><small>YOU</small></div>' +
+            '<div class="game-stat"><b id="airOpponentScore">0</b><small>OPPONENT</small></div>' +
+            '<div class="game-stat"><b id="airTime">45</b><small>SECONDS</small></div>' +
+            '<div class="game-stat"><b id="airModeLabel">VS AI</b><small>MODE</small></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="game-panel">' +
+          '<div class="air-hockey-cabinet" id="airBoard" tabindex="0" aria-label="Air hockey table">' +
+            '<div class="air-center-line"></div>' +
+            '<div class="air-goal left"></div>' +
+            '<div class="air-goal right"></div>' +
+            '<div class="air-puck" id="airPuck"></div>' +
+            '<div class="air-paddle player" id="airPlayerPaddle"></div>' +
+            '<div class="air-paddle opponent" id="airOpponentPaddle"></div>' +
+          '</div>' +
+          '<div class="game-status" id="airStatus">Use W/S or the arrow keys to move. Click the board to focus it, then start the round.</div>' +
+          '<div class="game-actions">' +
+            '<button class="game-action secondary" id="airMode" type="button">SWITCH TO 2 PLAYER</button>' +
+            '<button class="game-action" id="airStart" type="button">START ROUND · 1 TOKEN</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+
+    bindTopbar(true);
+
+    const board = arcadeBox.querySelector('#airBoard');
+    const puckElement = arcadeBox.querySelector('#airPuck');
+    const playerPaddle = arcadeBox.querySelector('#airPlayerPaddle');
+    const opponentPaddle = arcadeBox.querySelector('#airOpponentPaddle');
+    const startButton = arcadeBox.querySelector('#airStart');
+    const modeButton = arcadeBox.querySelector('#airMode');
+    const statusElement = arcadeBox.querySelector('#airStatus');
+    const playerScoreElement = arcadeBox.querySelector('#airPlayerScore');
+    const opponentScoreElement = arcadeBox.querySelector('#airOpponentScore');
+    const timeElement = arcadeBox.querySelector('#airTime');
+    const modeLabel = arcadeBox.querySelector('#airModeLabel');
+    const BOARD_WIDTH = 640;
+    const BOARD_HEIGHT = 320;
+    const PUCK_RADIUS = 10;
+    const PADDLE_RADIUS = 26;
+    const LEFT_X = 58;
+    const RIGHT_X = BOARD_WIDTH - 58;
+    let mode = 'ai';
+    let running = false;
+    let playerScore = 0;
+    let opponentScore = 0;
+    let timeLeft = 45;
+    let roundStart = 0;
+    let lastFrame = 0;
+    let raf = 0;
+    let restartTimer = 0;
+    let playerY = BOARD_HEIGHT / 2;
+    let opponentY = BOARD_HEIGHT / 2;
+    let puck = { x: BOARD_WIDTH / 2, y: BOARD_HEIGHT / 2, vx: 220, vy: 74 };
+    const keys = { w: false, s: false, up: false, down: false };
+    const pointerActive = { value: false };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function render() {
+      puckElement.style.left = puck.x / BOARD_WIDTH * 100 + '%';
+      puckElement.style.top = puck.y / BOARD_HEIGHT * 100 + '%';
+      playerPaddle.style.left = LEFT_X / BOARD_WIDTH * 100 + '%';
+      playerPaddle.style.top = playerY / BOARD_HEIGHT * 100 + '%';
+      opponentPaddle.style.left = RIGHT_X / BOARD_WIDTH * 100 + '%';
+      opponentPaddle.style.top = opponentY / BOARD_HEIGHT * 100 + '%';
+      playerScoreElement.textContent = playerScore;
+      opponentScoreElement.textContent = opponentScore;
+      timeElement.textContent = Math.max(0, Math.ceil(timeLeft));
+      modeLabel.textContent = mode === 'ai' ? 'VS AI' : '2 PLAYER';
+    }
+
+    function resetPuck(direction) {
+      puck.x = BOARD_WIDTH / 2;
+      puck.y = BOARD_HEIGHT / 2;
+      puck.vx = direction * 220;
+      puck.vy = direction > 0 ? 72 : -72;
+    }
+
+    function finishRound() {
+      if (!running) return;
+      running = false;
+      cancelAnimationFrame(raf);
+      clearTimeout(restartTimer);
+      const payout = Math.max(5, playerScore * 14 + Math.max(0, Math.floor(timeLeft * 2)) + Math.max(0, playerScore - opponentScore) * 6);
+      const high = saveHighScore('air', playerScore);
+      awardTickets(payout, 'Air Hockey');
+      showToast('Air Hockey finished. ' + playerScore + ' to ' + opponentScore + ' paid +' + payout + ' tickets.');
+      arcadeBox.querySelector('#airMode').disabled = false;
+      startButton.disabled = false;
+      startButton.textContent = 'PLAY AGAIN · 1 TOKEN';
+      statusElement.textContent = 'Final score: ' + playerScore + ' to ' + opponentScore + '. Best score: ' + high + '.';
+      render();
+    }
+
+    function goal(scoredByPlayer) {
+      if (scoredByPlayer) {
+        playerScore += 1;
+        statusElement.textContent = 'Goal! You scored. Resetting the puck to keep the pace up.';
+        resetPuck(-1);
+      } else {
+        opponentScore += 1;
+        statusElement.textContent = 'The other side scored. Get the next rebound back under control.';
+        resetPuck(1);
+      }
+
+      if (playerScore >= 7 || opponentScore >= 7) {
+        timeLeft = 0;
+        render();
+        finishRound();
+      }
+    }
+
+    function step(now) {
+      if (!running) return;
+      if (!lastFrame) lastFrame = now;
+      const delta = Math.min(.032, (now - lastFrame) / 1000);
+      lastFrame = now;
+      timeLeft = Math.max(0, 45 - (now - roundStart) / 1000);
+
+      const playerTarget = clamp(playerY + ((keys.w ? -1 : 0) + (keys.s ? 1 : 0)) * 340 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      playerY = playerTarget;
+
+      if (mode === 'ai') {
+        const pursuit = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
+        opponentY += clamp(pursuit - opponentY, -250 * delta, 250 * delta);
+      } else {
+        opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 330 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      }
+
+      opponentY = clamp(opponentY, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      puck.x += puck.vx * delta;
+      puck.y += puck.vy * delta;
+
+      if (puck.y <= PUCK_RADIUS) {
+        puck.y = PUCK_RADIUS;
+        puck.vy *= -1;
+      }
+      if (puck.y >= BOARD_HEIGHT - PUCK_RADIUS) {
+        puck.y = BOARD_HEIGHT - PUCK_RADIUS;
+        puck.vy *= -1;
+      }
+
+      const playerHit = puck.vx < 0 && puck.x - PUCK_RADIUS <= LEFT_X + PADDLE_RADIUS + 2 && Math.abs(puck.y - playerY) <= PADDLE_RADIUS + PUCK_RADIUS;
+      const opponentHit = puck.vx > 0 && puck.x + PUCK_RADIUS >= RIGHT_X - PADDLE_RADIUS - 2 && Math.abs(puck.y - opponentY) <= PADDLE_RADIUS + PUCK_RADIUS;
+
+      if (playerHit) {
+        puck.x = LEFT_X + PADDLE_RADIUS + PUCK_RADIUS + 1;
+        puck.vx = Math.abs(puck.vx) * 1.03;
+        puck.vy += (puck.y - playerY) * 5;
+      }
+
+      if (opponentHit) {
+        puck.x = RIGHT_X - PADDLE_RADIUS - PUCK_RADIUS - 1;
+        puck.vx = -Math.abs(puck.vx) * 1.03;
+        puck.vy += (puck.y - opponentY) * 5;
+      }
+
+      puck.vx = clamp(puck.vx, -420, 420);
+      puck.vy = clamp(puck.vy, -300, 300);
+
+      if (puck.x < -20) {
+        goal(false);
+      }
+
+      if (puck.x > BOARD_WIDTH + 20) {
+        goal(true);
+      }
+
+      if (timeLeft <= 0) {
+        finishRound();
+        return;
+      }
+
+      render();
+      raf = requestAnimationFrame(step);
+    }
+
+    function startRound() {
+      if (!spendToken()) {
+        statusElement.textContent = 'No tokens available. Finish a task to earn another round.';
+        return;
+      }
+
+      running = true;
+      playerScore = 0;
+      opponentScore = 0;
+      timeLeft = 45;
+      roundStart = performance.now();
+      lastFrame = 0;
+      playerY = BOARD_HEIGHT / 2;
+      opponentY = BOARD_HEIGHT / 2;
+      resetPuck(1);
+      startButton.disabled = true;
+      modeButton.disabled = true;
+      startButton.textContent = 'MATCH IN PROGRESS';
+      statusElement.textContent = 'Keep the puck moving. Fast saves and clean rebounds matter more than holding still.';
+      render();
+      cancelAnimationFrame(raf);
+      clearTimeout(restartTimer);
+      raf = requestAnimationFrame(step);
+    }
+
+    function toggleMode() {
+      if (running) return;
+      mode = mode === 'ai' ? 'two' : 'ai';
+      modeButton.textContent = mode === 'ai' ? 'SWITCH TO 2 PLAYER' : 'SWITCH TO VS AI';
+      render();
+      statusElement.textContent = mode === 'ai'
+        ? 'AI mode is ready. The right paddle follows the puck with a little delay.'
+        : '2-player mode is ready. Use W/S for the left paddle and Arrow Up/Down for the right one.';
+    }
+
+    function onKeydown(event) {
+      if (event.key === 'w' || event.key === 'W') keys.w = true;
+      if (event.key === 's' || event.key === 'S') keys.s = true;
+      if (event.key === 'ArrowUp') keys.up = true;
+      if (event.key === 'ArrowDown') keys.down = true;
+      if ((event.key === ' ' || event.key === 'Enter') && !running && document.activeElement === board) {
+        event.preventDefault();
+        startRound();
+      }
+    }
+
+    function onKeyup(event) {
+      if (event.key === 'w' || event.key === 'W') keys.w = false;
+      if (event.key === 's' || event.key === 'S') keys.s = false;
+      if (event.key === 'ArrowUp') keys.up = false;
+      if (event.key === 'ArrowDown') keys.down = false;
+    }
+
+    function moveFromPointer(event) {
+      if (!pointerActive.value) return;
+      const rect = board.getBoundingClientRect();
+      const y = clamp((event.clientY - rect.top) / rect.height * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      playerY = y;
+      if (mode === 'two') {
+        opponentY = clamp((event.clientX - rect.left) / rect.width * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      }
+      render();
+    }
+
+    board.addEventListener('pointerdown', event => {
+      pointerActive.value = true;
+      board.setPointerCapture(event.pointerId);
+      moveFromPointer(event);
+    });
+    board.addEventListener('pointermove', moveFromPointer);
+    board.addEventListener('pointerup', () => { pointerActive.value = false; });
+    board.addEventListener('pointercancel', () => { pointerActive.value = false; });
+    startButton.addEventListener('click', startRound);
+    modeButton.addEventListener('click', toggleMode);
+    window.addEventListener('keydown', onKeydown);
+    window.addEventListener('keyup', onKeyup);
+
+    render();
+    cleanupGame = () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      clearTimeout(restartTimer);
+      window.removeEventListener('keydown', onKeydown);
+      window.removeEventListener('keyup', onKeyup);
+    };
   }
 
   function setupSkeeBall() {
@@ -668,6 +956,209 @@ function installArcadeGames() {
     window.addEventListener('keydown', onKeydown);
 
     cleanupGame = () => {
+      timers.forEach(timer => clearTimeout(timer));
+      window.removeEventListener('keydown', onKeydown);
+    };
+  }
+
+  function setupCoinPush() {
+    arcadeBox.innerHTML =
+      topbar(true) +
+      '<section class="arcade-game">' +
+        '<div class="game-intro">' +
+          '<div><div class="kicker">DROP / PUSH / WIN</div><h2>Coin <span>Push</span></h2><p>Choose a lane, drop coins, and let the shelf shove prizes closer to the edge. Big pushes and prize falls pay tickets immediately.</p></div>' +
+          '<div class="game-stats">' +
+            '<div class="game-stat"><b id="coinDrops">10</b><small>DROPS LEFT</small></div>' +
+            '<div class="game-stat"><b id="coinTickets">0</b><small>ROUND TICKETS</small></div>' +
+            '<div class="game-stat"><b id="coinHigh">' + getHighScore('coin') + '</b><small>BEST ROUND</small></div>' +
+            '<div class="game-stat"><b id="coinLaneLabel">LANE 2</b><small>ACTIVE LANE</small></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="game-panel">' +
+          '<div class="coin-push-machine" id="coinMachine" tabindex="0" aria-label="Coin push table">' +
+            '<div class="coin-push-header">PRIZE SHELF</div>' +
+            '<div class="coin-push-board" id="coinBoard"></div>' +
+            '<div class="coin-push-tray" id="coinTray">Every coin nudges the shelf. Prizes that fall into the tray count right away.</div>' +
+          '</div>' +
+          '<div class="game-status" id="coinStatus">Pick a lane, then drop coins to work the shelf forward.</div>' +
+          '<div class="coin-lane-controls" id="coinLanes">' +
+            '<button class="game-action secondary" type="button" data-lane="0">LANE 1</button>' +
+            '<button class="game-action" type="button" data-lane="1">LANE 2</button>' +
+            '<button class="game-action secondary" type="button" data-lane="2">LANE 3</button>' +
+          '</div>' +
+          '<div class="game-actions">' +
+            '<button class="game-action" id="coinDrop" type="button" disabled>DROP COIN</button>' +
+            '<button class="game-action secondary" id="coinStart" type="button">START ROUND · 1 TOKEN</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+
+    bindTopbar(true);
+
+    const machine = arcadeBox.querySelector('#coinMachine');
+    const board = arcadeBox.querySelector('#coinBoard');
+    const tray = arcadeBox.querySelector('#coinTray');
+    const statusElement = arcadeBox.querySelector('#coinStatus');
+    const startButton = arcadeBox.querySelector('#coinStart');
+    const dropButton = arcadeBox.querySelector('#coinDrop');
+    const dropsElement = arcadeBox.querySelector('#coinDrops');
+    const ticketsElement = arcadeBox.querySelector('#coinTickets');
+    const highElement = arcadeBox.querySelector('#coinHigh');
+    const laneLabel = arcadeBox.querySelector('#coinLaneLabel');
+    const laneButtons = Array.from(arcadeBox.querySelectorAll('#coinLanes [data-lane]'));
+    const laneTemplates = [
+      [
+        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐸', name: 'Lucky Frog', tickets: 24 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐰', name: 'Blue Bunny', tickets: 30 },
+        { type: 'coin' }
+      ],
+      [
+        { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 34 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐼', name: 'Panda Pal', tickets: 48 },
+        { type: 'coin' }, { type: 'coin' }
+      ],
+      [
+        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐻', name: 'Golden Bear', tickets: 56 },
+        { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 66 },
+        { type: 'coin' }, { type: 'coin' }
+      ]
+    ];
+    const lanes = laneTemplates.map(lane => lane.map(item => ({ ...item })));
+    const timers = [];
+    let active = false;
+    let selectedLane = 1;
+    let dropsLeft = 10;
+    let roundTickets = 0;
+    let dropping = false;
+
+    function prizeClass(item) {
+      return item.type === 'prize' ? ' prize' : '';
+    }
+
+    function render() {
+      board.innerHTML = lanes.map((lane, laneIndex) =>
+        '<div class="coin-push-lane' + (laneIndex === selectedLane ? ' active' : '') + '">' +
+          lane.map(item =>
+            '<div class="coin-push-item' + prizeClass(item) + '">' +
+              (item.type === 'coin'
+                ? '🪙'
+                : '<span>' + item.emoji + '</span><small>' + item.tickets + 'T</small>') +
+            '</div>'
+          ).join('') +
+          '<div class="coin-push-edge">EDGE</div>' +
+        '</div>'
+      ).join('');
+      dropsElement.textContent = dropsLeft;
+      ticketsElement.textContent = roundTickets;
+      laneLabel.textContent = 'LANE ' + (selectedLane + 1);
+      laneButtons.forEach((button, index) => {
+        button.classList.toggle('secondary', index !== selectedLane);
+        button.classList.toggle('active', index === selectedLane);
+      });
+    }
+
+    function finishRound() {
+      active = false;
+      dropping = false;
+      dropButton.disabled = true;
+      const payout = Math.max(5, roundTickets + Math.floor(dropsLeft / 2));
+      const high = saveHighScore('coin', roundTickets);
+      highElement.textContent = high;
+      awardTickets(payout, 'Coin Push');
+      statusElement.textContent = 'Round complete. You pushed out ' + roundTickets + ' worth of prizes and earned +' + payout + ' tickets.';
+      tray.textContent = 'Round complete. Best round so far: ' + high + ' tickets.';
+      startButton.disabled = false;
+      startButton.textContent = 'PLAY AGAIN · 1 TOKEN';
+      showToast('Coin Push paid +' + payout + ' tickets.');
+    }
+
+    function dropCoin() {
+      if (!active || dropping || dropsLeft <= 0) return;
+      dropping = true;
+      dropsLeft -= 1;
+
+      const lane = lanes[selectedLane];
+      lane.unshift({ type: 'coin' });
+      const fallen = lane.length > 7 ? lane.pop() : null;
+      render();
+
+      const coin = document.createElement('div');
+      coin.className = 'coin-push-drop';
+      coin.textContent = '🪙';
+      coin.style.left = '50%';
+      machine.append(coin);
+      requestAnimationFrame(() => coin.classList.add('drop'));
+      timers.push(setTimeout(() => coin.remove(), 540));
+
+      timers.push(setTimeout(() => {
+        if (fallen && fallen.type === 'prize') {
+          roundTickets += fallen.tickets;
+          tray.textContent = fallen.name + ' fell off the edge for +' + fallen.tickets + ' tickets.';
+          statusElement.textContent = fallen.name + ' was pushed off the shelf. That one counted immediately.';
+        } else {
+          tray.textContent = 'The shelf shifted. Keep the pressure on the lane.';
+          statusElement.textContent = 'Coin landed cleanly. The shelf moved a little farther forward.';
+        }
+        render();
+        dropping = false;
+        if (dropsLeft <= 0) {
+          finishRound();
+        }
+      }, 560));
+    }
+
+    function startRound() {
+      if (!spendToken()) {
+        statusElement.textContent = 'No tokens available. Finish a task to earn another round.';
+        return;
+      }
+
+      active = true;
+      dropping = false;
+      dropsLeft = 10;
+      roundTickets = 0;
+      lanes.forEach((lane, laneIndex) => {
+        lane.splice(0, lane.length, ...laneTemplates[laneIndex].map(item => ({ ...item })));
+      });
+      startButton.disabled = true;
+      dropButton.disabled = false;
+      startButton.textContent = 'ROUND IN PROGRESS';
+      tray.textContent = 'Drop coins to shove prizes off the edge.';
+      statusElement.textContent = 'Choose a lane. Coins on the shelf are already in motion, so good timing matters.';
+      render();
+    }
+
+    function selectLane(index) {
+      selectedLane = Math.max(0, Math.min(2, index));
+      render();
+    }
+
+    function onKeydown(event) {
+      if (!active) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        selectLane(selectedLane - 1);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        selectLane(selectedLane + 1);
+      }
+      if (event.key === ' ' || event.key === 'ArrowDown' || event.key === 'Enter') {
+        event.preventDefault();
+        dropCoin();
+      }
+    }
+
+    laneButtons.forEach(button => {
+      button.addEventListener('click', () => selectLane(Number(button.dataset.lane)));
+    });
+    startButton.addEventListener('click', startRound);
+    dropButton.addEventListener('click', dropCoin);
+    window.addEventListener('keydown', onKeydown);
+
+    render();
+    cleanupGame = () => {
+      active = false;
       timers.forEach(timer => clearTimeout(timer));
       window.removeEventListener('keydown', onKeydown);
     };

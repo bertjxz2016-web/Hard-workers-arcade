@@ -243,6 +243,64 @@
   transform: translateX(-50%) skewY(-3deg);
 }
 
+.air-preview {
+  background:
+    radial-gradient(circle at 50% 45%, #ffffff88 0 16%, transparent 17%),
+    linear-gradient(145deg, #1f4e6f, #7cb8c9);
+}
+
+.air-preview::before {
+  content: '';
+  position: absolute;
+  inset: 18px 28px 24px;
+  background:
+    linear-gradient(90deg, transparent 0 48%, #ffffffc7 48% 52%, transparent 52%),
+    linear-gradient(#fefefe1f, #fefefe10);
+  border: 7px solid #eff6f1;
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 8px #11272f1e;
+}
+
+.air-preview::after {
+  content: '◉';
+  position: absolute;
+  right: 30px;
+  bottom: 24px;
+  color: #fffb;
+  font-size: 44px;
+  filter: drop-shadow(0 5px 6px #0004);
+}
+
+.coin-preview {
+  background:
+    radial-gradient(circle at 20% 18%, #ffffff55 0 11%, transparent 12%),
+    linear-gradient(155deg, #72513d, #d59a5b);
+}
+
+.coin-preview::before {
+  content: '';
+  position: absolute;
+  inset: 22px 22px 44px;
+  background:
+    linear-gradient(180deg, #fff2 0 18%, transparent 19% 100%),
+    repeating-linear-gradient(90deg, transparent 0 39px, #0001 40px),
+    linear-gradient(#8d6246, #f0c38d);
+  border: 6px solid #e8ddcf;
+  border-radius: 18px;
+  box-shadow: inset 0 -14px 0 #6c4b37;
+}
+
+.coin-preview::after {
+  content: '🪙 🪙 🪙';
+  position: absolute;
+  right: 0;
+  bottom: 16px;
+  left: 0;
+  font-size: 40px;
+  text-align: center;
+  filter: drop-shadow(3px 4px 0 #0002);
+}
+
 .arcade-rule {
   display: flex;
   align-items: center;
@@ -589,6 +647,202 @@
   background: #6e4a3b;
 }
 
+/* Air Hockey */
+.air-hockey-cabinet {
+  position: relative;
+  width: min(640px, 100%);
+  height: 340px;
+  margin: auto;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, #ffffff22 0 11%, transparent 12%),
+    linear-gradient(145deg, #0f2c44, #4e9ab2);
+  border: 9px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 3px #ffffff24, inset 0 -26px 0 #1c3440, 0 10px 0 #b9aa99;
+  touch-action: none;
+}
+
+.air-hockey-cabinet::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 4px;
+  background: repeating-linear-gradient(to bottom, #fff 0 16px, transparent 16px 30px);
+  transform: translateX(-50%);
+}
+
+.air-center-line {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+  left: 30px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent 0 47%, #fff 47% 53%, transparent 53%);
+  opacity: .75;
+}
+
+.air-goal {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 120px;
+  background: #ffffff1f;
+  border: 2px solid #fff7;
+  transform: translateY(-50%);
+}
+
+.air-goal.left { left: 0; border-left: 0; border-radius: 0 14px 14px 0; }
+.air-goal.right { right: 0; border-right: 0; border-radius: 14px 0 0 14px; }
+
+.air-puck,
+.air-paddle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+.air-puck {
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 35% 35%, #fff, #d6e6ee 40%, #537081);
+  box-shadow: 0 5px 5px #0004;
+}
+
+.air-paddle {
+  width: 52px;
+  height: 52px;
+  border: 5px solid #fefefe;
+  box-shadow: 0 8px 10px #0003;
+}
+
+.air-paddle.player {
+  background: radial-gradient(circle at 36% 32%, #ffddc6, #f58d63 70%);
+}
+
+.air-paddle.opponent {
+  background: radial-gradient(circle at 36% 32%, #d7eef8, #7bb0d0 70%);
+}
+
+/* Coin Push */
+.coin-push-machine {
+  position: relative;
+  width: min(640px, 100%);
+  margin: auto;
+  padding: 14px 12px 12px;
+  background: linear-gradient(160deg, #5e4334, #f2cb97);
+  border: 9px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 3px #ffffff2d, inset 0 -26px 0 #7a543f, 0 10px 0 #b9aa99;
+}
+
+.coin-push-header {
+  margin-bottom: 12px;
+  color: #fff7;
+  font: 700 11px 'Space Grotesk', sans-serif;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.coin-push-board {
+  display: grid;
+  gap: 9px;
+}
+
+.coin-push-lane {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr)) 68px;
+  gap: 6px;
+  align-items: center;
+  padding: 7px;
+  background: linear-gradient(180deg, #fff7, #fff0);
+  border: 1px solid #ffffff2b;
+  border-radius: 12px;
+}
+
+.coin-push-lane.active {
+  box-shadow: inset 0 0 0 2px #fff8, 0 0 0 2px #f36b4244;
+}
+
+.coin-push-item {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  color: #84572c;
+  background: linear-gradient(180deg, #fbf5ea, #f2d9b1);
+  border: 1px solid #ffffff99;
+  border-radius: 10px;
+  box-shadow: inset 0 -4px 0 #0001;
+  font-size: 22px;
+}
+
+.coin-push-item.prize {
+  color: #fff;
+  background: linear-gradient(180deg, #f36b42, #c74e2c);
+}
+
+.coin-push-item.prize span {
+  display: block;
+  font-size: 24px;
+}
+
+.coin-push-item.prize small {
+  display: block;
+  margin-top: 2px;
+  font: 700 7px 'Space Grotesk', sans-serif;
+  letter-spacing: 1px;
+}
+
+.coin-push-edge {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  color: #fff;
+  background: linear-gradient(180deg, #20252c, #3c434b);
+  border-radius: 10px;
+  font: 700 9px 'Space Grotesk', sans-serif;
+  letter-spacing: 1px;
+}
+
+.coin-lane-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.coin-lane-controls .game-action {
+  min-width: 98px;
+}
+
+.coin-push-tray {
+  margin-top: 12px;
+  padding: 10px 12px;
+  color: #fff;
+  background: #20252ccc;
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.coin-push-drop {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 5;
+  font-size: 28px;
+  transform: translate(-50%, 0);
+  transition: transform .55s cubic-bezier(.2,.9,.22,1), opacity .55s;
+  pointer-events: none;
+}
+
+.coin-push-drop.drop {
+  transform: translate(-50%, 205px) scale(.62) rotate(12deg);
+  opacity: .1;
+}
+
 @media (max-width: 760px) {
   .arcade-box {
     min-height: 0;
@@ -662,8 +916,25 @@
 
   .skee-cabinet,
   .claw-cabinet,
+  .air-hockey-cabinet,
+  .coin-push-machine,
   .tower-stage {
     height: 320px;
+  }
+
+  .coin-push-lane {
+    grid-template-columns: repeat(8, minmax(0, 1fr)) 52px;
+    gap: 4px;
+  }
+
+  .coin-push-item,
+  .coin-push-edge {
+    min-height: 36px;
+  }
+
+  .air-paddle {
+    width: 46px;
+    height: 46px;
   }
 
   .skee-backboard {
