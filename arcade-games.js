@@ -1022,18 +1022,18 @@ function installArcadeGames() {
     const laneButtons = Array.from(arcadeBox.querySelectorAll('#coinLanes [data-lane]'));
     const laneTemplates = [
       [
-        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐸', name: 'Lucky Frog', tickets: 24 },
-        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐰', name: 'Blue Bunny', tickets: 30 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐸', name: 'Lucky Frog', tickets: 14 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐰', name: 'Blue Bunny', tickets: 18 },
         { type: 'coin' }, { type: 'coin' }, { type: 'coin' }
       ],
       [
-        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 34 },
-        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐼', name: 'Panda Pal', tickets: 48 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 20 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐼', name: 'Panda Pal', tickets: 28 },
         { type: 'coin' }, { type: 'coin' }, { type: 'coin' }
       ],
       [
-        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐻', name: 'Golden Bear', tickets: 56 },
-        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 66 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐻', name: 'Golden Bear', tickets: 30 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 36 },
         { type: 'coin' }, { type: 'coin' }, { type: 'coin' }
       ]
     ];
@@ -1076,7 +1076,7 @@ function installArcadeGames() {
       active = false;
       dropping = false;
       dropButton.disabled = true;
-      const payout = Math.max(5, roundTickets + Math.floor(dropsLeft / 6));
+      const payout = Math.max(3, Math.floor(roundTickets / 2) + Math.floor(dropsLeft / 10));
       const high = saveHighScore('coin', roundTickets);
       highElement.textContent = high;
       awardTickets(payout, 'Coin Push');
