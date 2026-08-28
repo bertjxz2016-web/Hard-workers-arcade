@@ -223,6 +223,10 @@ function installArcadeGames() {
     let playerY = BOARD_HEIGHT / 2;
     let opponentX = BOARD_WIDTH * 3 / 4;
     let opponentY = BOARD_HEIGHT / 2;
+    let playerVX = 0;
+    let playerVY = 0;
+    let opponentVX = 0;
+    let opponentVY = 0;
     let puck = { x: BOARD_WIDTH / 2, y: BOARD_HEIGHT / 2, vx: 260, vy: 86 };
     const keys = { w: false, s: false, a: false, d: false, up: false, down: false, left: false, right: false };
     const pointerActive = { value: false };
@@ -248,6 +252,10 @@ function installArcadeGames() {
       puck.y = BOARD_HEIGHT / 2;
       puck.vx = direction * 300;
       puck.vy = direction > 0 ? 82 : -82;
+    }
+
+    function applyDrag(value, amount) {
+      return Math.abs(value) <= amount ? 0 : value * (1 - amount);
     }
 
     function finishRound() {
@@ -289,22 +297,32 @@ function installArcadeGames() {
       const delta = Math.min(.032, (now - lastFrame) / 1000);
       lastFrame = now;
 
-      playerX = clamp(playerX + ((keys.a ? -1 : 0) + (keys.d ? 1 : 0)) * 290 * delta, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
-      playerY = clamp(playerY + ((keys.w ? -1 : 0) + (keys.s ? 1 : 0)) * 280 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      const playerInputVX = ((keys.a ? -1 : 0) + (keys.d ? 1 : 0)) * 760;
+      const playerInputVY = ((keys.w ? -1 : 0) + (keys.s ? 1 : 0)) * 720;
+      playerVX = playerVX * 0.78 + playerInputVX * 0.22;
+      playerVY = playerVY * 0.78 + playerInputVY * 0.22;
+      playerVX = applyDrag(playerVX, .015);
+      playerVY = applyDrag(playerVY, .015);
+      playerX = clamp(playerX + playerVX * delta, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
+      playerY = clamp(playerY + playerVY * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
 
       if (mode === 'ai') {
         const pursuitX = puck.vx > 0 ? puck.x : RIGHT_LIMIT - 70;
         const pursuitY = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
-        opponentX += clamp(pursuitX - opponentX, -230 * delta, 230 * delta);
-        opponentY += clamp(pursuitY - opponentY, -220 * delta, 220 * delta);
+        opponentVX = opponentVX * 0.82 + clamp(pursuitX - opponentX, -230, 230) * 0.18;
+        opponentVY = opponentVY * 0.82 + clamp(pursuitY - opponentY, -220, 220) * 0.18;
       } else {
-        opponentX = clamp(opponentX + ((keys.left ? -1 : 0) + (keys.right ? 1 : 0)) * 340 * delta, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
-        opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 320 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+        const opponentInputVX = ((keys.left ? -1 : 0) + (keys.right ? 1 : 0)) * 760;
+        const opponentInputVY = ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 720;
+        opponentVX = opponentVX * 0.78 + opponentInputVX * 0.22;
+        opponentVY = opponentVY * 0.78 + opponentInputVY * 0.22;
       }
 
       playerX = clamp(playerX, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
-      opponentY = clamp(opponentY, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
-      opponentX = clamp(opponentX, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
+      opponentX = clamp(opponentX + opponentVX * delta, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
+      opponentY = clamp(opponentY + opponentVY * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      opponentVX = applyDrag(opponentVX, .015);
+      opponentVY = applyDrag(opponentVY, .015);
       puck.x += puck.vx * delta;
       puck.y += puck.vy * delta;
 
@@ -323,13 +341,15 @@ function installArcadeGames() {
       if (playerHit) {
         puck.x = playerX + PADDLE_RADIUS + PUCK_RADIUS + 1;
         puck.vx = Math.abs(puck.vx) * 1.09;
-        puck.vy += (puck.y - playerY) * 4.2;
+        puck.vx += playerVX * 0.18;
+        puck.vy += (puck.y - playerY) * 4.2 + playerVY * 0.04;
       }
 
       if (opponentHit) {
         puck.x = opponentX - PADDLE_RADIUS - PUCK_RADIUS - 1;
         puck.vx = -Math.abs(puck.vx) * 1.09;
-        puck.vy += (puck.y - opponentY) * 4.2;
+        puck.vx += opponentVX * 0.18;
+        puck.vy += (puck.y - opponentY) * 4.2 + opponentVY * 0.04;
       }
 
       puck.vx = clamp(puck.vx, -460, 460);
@@ -375,6 +395,10 @@ function installArcadeGames() {
       playerY = BOARD_HEIGHT / 2;
       opponentX = BOARD_WIDTH * 3 / 4;
       opponentY = BOARD_HEIGHT / 2;
+      playerVX = 0;
+      playerVY = 0;
+      opponentVX = 0;
+      opponentVY = 0;
       resetPuck(1);
       startButton.disabled = true;
       modeButton.disabled = true;
@@ -427,11 +451,17 @@ function installArcadeGames() {
       const rect = board.getBoundingClientRect();
       const x = clamp((event.clientX - rect.left) / rect.width * BOARD_WIDTH, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
       const y = clamp((event.clientY - rect.top) / rect.height * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      playerVX = (x - playerX) * 22;
+      playerVY = (y - playerY) * 22;
       playerX = x;
       playerY = y;
       if (mode === 'two') {
-        opponentX = clamp((event.clientX - rect.left) / rect.width * BOARD_WIDTH, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
-        opponentY = clamp((event.clientY - rect.top) / rect.height * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+        const opponentTargetX = clamp((event.clientX - rect.left) / rect.width * BOARD_WIDTH, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
+        const opponentTargetY = clamp((event.clientY - rect.top) / rect.height * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+        opponentVX = (opponentTargetX - opponentX) * 22;
+        opponentVY = (opponentTargetY - opponentY) * 22;
+        opponentX = opponentTargetX;
+        opponentY = opponentTargetY;
       }
       render();
     }
