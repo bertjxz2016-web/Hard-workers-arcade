@@ -208,8 +208,9 @@ function installArcadeGames() {
     const BOARD_HEIGHT = 320;
     const PUCK_RADIUS = 10;
     const PADDLE_RADIUS = 26;
-    const LEFT_X = 58;
-    const RIGHT_X = BOARD_WIDTH - 58;
+    const LEFT_LIMIT = 46;
+    const CENTER_LINE = BOARD_WIDTH / 2;
+    const RIGHT_LIMIT = BOARD_WIDTH - 46;
     const GOAL_TOP = BOARD_HEIGHT / 2 - 52;
     const GOAL_BOTTOM = BOARD_HEIGHT / 2 + 52;
     let mode = 'ai';
@@ -221,10 +222,12 @@ function installArcadeGames() {
     let lastFrame = 0;
     let raf = 0;
     let restartTimer = 0;
+    let playerX = BOARD_WIDTH / 4;
     let playerY = BOARD_HEIGHT / 2;
+    let opponentX = BOARD_WIDTH * 3 / 4;
     let opponentY = BOARD_HEIGHT / 2;
-    let puck = { x: BOARD_WIDTH / 2, y: BOARD_HEIGHT / 2, vx: 220, vy: 74 };
-    const keys = { w: false, s: false, up: false, down: false };
+    let puck = { x: BOARD_WIDTH / 2, y: BOARD_HEIGHT / 2, vx: 260, vy: 86 };
+    const keys = { w: false, s: false, a: false, d: false, up: false, down: false, left: false, right: false };
     const pointerActive = { value: false };
 
     function clamp(value, min, max) {
@@ -234,9 +237,9 @@ function installArcadeGames() {
     function render() {
       puckElement.style.left = puck.x / BOARD_WIDTH * 100 + '%';
       puckElement.style.top = puck.y / BOARD_HEIGHT * 100 + '%';
-      playerPaddle.style.left = LEFT_X / BOARD_WIDTH * 100 + '%';
+      playerPaddle.style.left = playerX / BOARD_WIDTH * 100 + '%';
       playerPaddle.style.top = playerY / BOARD_HEIGHT * 100 + '%';
-      opponentPaddle.style.left = RIGHT_X / BOARD_WIDTH * 100 + '%';
+      opponentPaddle.style.left = opponentX / BOARD_WIDTH * 100 + '%';
       opponentPaddle.style.top = opponentY / BOARD_HEIGHT * 100 + '%';
       playerScoreElement.textContent = playerScore;
       opponentScoreElement.textContent = opponentScore;
@@ -247,8 +250,8 @@ function installArcadeGames() {
     function resetPuck(direction) {
       puck.x = BOARD_WIDTH / 2;
       puck.y = BOARD_HEIGHT / 2;
-      puck.vx = direction * 170;
-      puck.vy = direction > 0 ? 52 : -52;
+      puck.vx = direction * 240;
+      puck.vy = direction > 0 ? 68 : -68;
     }
 
     function finishRound() {
@@ -292,17 +295,22 @@ function installArcadeGames() {
       lastFrame = now;
       timeLeft = Math.max(0, 45 - (now - roundStart) / 1000);
 
-      const playerTarget = clamp(playerY + ((keys.w ? -1 : 0) + (keys.s ? 1 : 0)) * 340 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
-      playerY = playerTarget;
+      playerX = clamp(playerX + ((keys.a ? -1 : 0) + (keys.d ? 1 : 0)) * 290 * delta, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
+      playerY = clamp(playerY + ((keys.w ? -1 : 0) + (keys.s ? 1 : 0)) * 280 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
 
       if (mode === 'ai') {
-        const pursuit = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
-        opponentY += clamp(pursuit - opponentY, -185 * delta, 185 * delta);
+        const pursuitX = puck.vx > 0 ? puck.x : RIGHT_LIMIT - 70;
+        const pursuitY = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
+        opponentX += clamp(pursuitX - opponentX, -190 * delta, 190 * delta);
+        opponentY += clamp(pursuitY - opponentY, -185 * delta, 185 * delta);
       } else {
+        opponentX = clamp(opponentX + ((keys.left ? -1 : 0) + (keys.right ? 1 : 0)) * 290 * delta, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
         opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 280 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
       }
 
+      playerX = clamp(playerX, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
       opponentY = clamp(opponentY, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      opponentX = clamp(opponentX, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
       puck.x += puck.vx * delta;
       puck.y += puck.vy * delta;
 
@@ -315,23 +323,23 @@ function installArcadeGames() {
         puck.vy *= -1;
       }
 
-      const playerHit = puck.vx < 0 && puck.x - PUCK_RADIUS <= LEFT_X + PADDLE_RADIUS + 2 && Math.abs(puck.y - playerY) <= PADDLE_RADIUS + PUCK_RADIUS;
-      const opponentHit = puck.vx > 0 && puck.x + PUCK_RADIUS >= RIGHT_X - PADDLE_RADIUS - 2 && Math.abs(puck.y - opponentY) <= PADDLE_RADIUS + PUCK_RADIUS;
+      const playerHit = puck.vx < 0 && puck.x - PUCK_RADIUS <= playerX + PADDLE_RADIUS + 2 && Math.abs(puck.y - playerY) <= PADDLE_RADIUS + PUCK_RADIUS;
+      const opponentHit = puck.vx > 0 && puck.x + PUCK_RADIUS >= opponentX - PADDLE_RADIUS - 2 && Math.abs(puck.y - opponentY) <= PADDLE_RADIUS + PUCK_RADIUS;
 
       if (playerHit) {
-        puck.x = LEFT_X + PADDLE_RADIUS + PUCK_RADIUS + 1;
-        puck.vx = Math.abs(puck.vx) * 1.01;
-        puck.vy += (puck.y - playerY) * 3.2;
+        puck.x = playerX + PADDLE_RADIUS + PUCK_RADIUS + 1;
+        puck.vx = Math.abs(puck.vx) * 1.05;
+        puck.vy += (puck.y - playerY) * 3.6;
       }
 
       if (opponentHit) {
-        puck.x = RIGHT_X - PADDLE_RADIUS - PUCK_RADIUS - 1;
-        puck.vx = -Math.abs(puck.vx) * 1.01;
-        puck.vy += (puck.y - opponentY) * 3.2;
+        puck.x = opponentX - PADDLE_RADIUS - PUCK_RADIUS - 1;
+        puck.vx = -Math.abs(puck.vx) * 1.05;
+        puck.vy += (puck.y - opponentY) * 3.6;
       }
 
-      puck.vx = clamp(puck.vx, -320, 320);
-      puck.vy = clamp(puck.vy, -220, 220);
+      puck.vx = clamp(puck.vx, -380, 380);
+      puck.vy = clamp(puck.vy, -240, 240);
 
       if (puck.x < -20) {
         if (puck.y >= GOAL_TOP && puck.y <= GOAL_BOTTOM) {
@@ -374,7 +382,9 @@ function installArcadeGames() {
       timeLeft = 45;
       roundStart = performance.now();
       lastFrame = 0;
+      playerX = BOARD_WIDTH / 4;
       playerY = BOARD_HEIGHT / 2;
+      opponentX = BOARD_WIDTH * 3 / 4;
       opponentY = BOARD_HEIGHT / 2;
       resetPuck(1);
       startButton.disabled = true;
@@ -400,8 +410,12 @@ function installArcadeGames() {
     function onKeydown(event) {
       if (event.key === 'w' || event.key === 'W') keys.w = true;
       if (event.key === 's' || event.key === 'S') keys.s = true;
+      if (event.key === 'a' || event.key === 'A') keys.a = true;
+      if (event.key === 'd' || event.key === 'D') keys.d = true;
       if (event.key === 'ArrowUp') keys.up = true;
       if (event.key === 'ArrowDown') keys.down = true;
+      if (event.key === 'ArrowLeft') keys.left = true;
+      if (event.key === 'ArrowRight') keys.right = true;
       if ((event.key === ' ' || event.key === 'Enter') && !running && document.activeElement === board) {
         event.preventDefault();
         startRound();
@@ -411,17 +425,24 @@ function installArcadeGames() {
     function onKeyup(event) {
       if (event.key === 'w' || event.key === 'W') keys.w = false;
       if (event.key === 's' || event.key === 'S') keys.s = false;
+      if (event.key === 'a' || event.key === 'A') keys.a = false;
+      if (event.key === 'd' || event.key === 'D') keys.d = false;
       if (event.key === 'ArrowUp') keys.up = false;
       if (event.key === 'ArrowDown') keys.down = false;
+      if (event.key === 'ArrowLeft') keys.left = false;
+      if (event.key === 'ArrowRight') keys.right = false;
     }
 
     function moveFromPointer(event) {
       if (!pointerActive.value) return;
       const rect = board.getBoundingClientRect();
+      const x = clamp((event.clientX - rect.left) / rect.width * BOARD_WIDTH, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
       const y = clamp((event.clientY - rect.top) / rect.height * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+      playerX = x;
       playerY = y;
       if (mode === 'two') {
-        opponentY = clamp((event.clientX - rect.left) / rect.width * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+        opponentX = clamp((event.clientX - rect.left) / rect.width * BOARD_WIDTH, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
+        opponentY = clamp((event.clientY - rect.top) / rect.height * BOARD_HEIGHT, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
       }
       render();
     }
