@@ -1,0 +1,253 @@
+.spin-wheel-offer {
+  width: 250px;
+  margin-top: 10px;
+  padding: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 90% 0, #f5bd4f55, transparent 36%),
+    var(--ink);
+  color: white;
+  border-radius: 7px;
+}
+
+.spin-wheel-offer .spin-offer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.spin-wheel-offer span {
+  font-size: 27px;
+}
+
+.spin-wheel-offer b {
+  display: block;
+  font: 700 12px 'Space Grotesk', sans-serif;
+}
+
+.spin-wheel-offer small {
+  display: block;
+  margin-top: 3px;
+  color: #ffffffa5;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.spin-wheel-offer button {
+  width: 100%;
+  margin-top: 13px;
+  padding: 11px;
+  color: var(--ink);
+  background: var(--yellow);
+  border-radius: 4px;
+  font-size: 8px;
+}
+
+.spin-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  place-items: center;
+  padding: 18px;
+  background: #14171cde;
+}
+
+.spin-modal.open {
+  display: grid;
+}
+
+.spin-card {
+  position: relative;
+  width: min(590px, 100%);
+  max-height: 96vh;
+  overflow: auto;
+  padding: 34px;
+  background:
+    radial-gradient(circle at 20% 0, #ffffff 0, transparent 35%),
+    var(--cream);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 14px 16px 0 #0007;
+  text-align: center;
+}
+
+.spin-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  color: var(--ink);
+  background: transparent;
+  font-size: 25px;
+}
+
+.spin-card h2 {
+  margin-top: 8px;
+  font-size: 36px;
+}
+
+.spin-card > p {
+  margin: 8px auto 20px;
+  max-width: 420px;
+  color: #71757a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.spin-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 8px 13px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  font: 700 11px 'Space Grotesk', sans-serif;
+}
+
+.spin-balance b {
+  color: var(--orange);
+  font-size: 15px;
+}
+
+.wheel-stage {
+  position: relative;
+  width: min(370px, 82vw);
+  aspect-ratio: 1;
+  margin: 0 auto 18px;
+}
+
+.wheel-pointer {
+  position: absolute;
+  z-index: 6;
+  top: -9px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-right: 18px solid transparent;
+  border-left: 18px solid transparent;
+  border-top: 38px solid var(--ink);
+  filter: drop-shadow(0 4px 1px #0003);
+  transform: translateX(-50%);
+}
+
+.lucky-wheel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: conic-gradient(
+    from -22.5deg,
+    #f36b42 0 45deg,
+    #f5bd4f 45deg 90deg,
+    #81b5a9 90deg 135deg,
+    #9bbbe0 135deg 180deg,
+    #c7b5d9 180deg 225deg,
+    #f09f72 225deg 270deg,
+    #70a5b7 270deg 315deg,
+    #e8bd52 315deg 360deg
+  );
+  border: 11px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 5px #fff8, 0 10px 0 #c7bcb0;
+  transition: transform 4s cubic-bezier(.12,.7,.1,1);
+}
+
+.wheel-label {
+  --label-angle: 0deg;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 78px;
+  color: var(--ink);
+  font: 800 9px/1.15 'Space Grotesk', sans-serif;
+  text-align: center;
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--label-angle))
+    translateY(-125px)
+    rotate(calc(var(--label-angle) * -1));
+}
+
+.wheel-label span {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 24px;
+}
+
+.wheel-hub {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  color: white;
+  background: var(--ink);
+  border: 6px solid white;
+  border-radius: 50%;
+  box-shadow: 0 4px 0 #0004;
+  font-size: 27px;
+  transform: translate(-50%, -50%);
+}
+
+.spin-action {
+  min-width: 230px;
+  padding: 14px 18px;
+  color: white;
+  background: var(--orange);
+  border-radius: 5px;
+  box-shadow: 0 4px 0 #c74e2c;
+}
+
+.spin-action:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+.spin-status {
+  min-height: 22px;
+  margin-top: 14px;
+  color: #666b70;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.spin-status.win {
+  color: var(--orange);
+}
+
+@media (max-width: 900px) {
+  .spin-wheel-offer {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .spin-card {
+    padding: 28px 15px 20px;
+  }
+
+  .spin-card h2 {
+    font-size: 30px;
+  }
+
+  .wheel-label {
+    width: 62px;
+    font-size: 7px;
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--label-angle))
+      translateY(-28vw)
+      rotate(calc(var(--label-angle) * -1));
+  }
+
+  .wheel-label span {
+    font-size: 20px;
+  }
+}
