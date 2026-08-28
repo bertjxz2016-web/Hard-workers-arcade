@@ -222,6 +222,12 @@ function installArcadeGames() {
     let dropsLeft = 8;
     let roundStars = 0;
     let dropping = false;
+    let pegHitFlash = 0;
+    let plinkoFrame = 0;
+    const pegColumns = 9;
+    const pegRows = 8;
+    const pegXPositions = [6, 16, 27, 39, 50, 61, 73, 84, 94];
+    const pegYPositions = [72, 102, 132, 162, 192, 222, 252, 282];
 
     function render() {
       slots.innerHTML = laneRewards.map((amount, index) =>
@@ -229,6 +235,15 @@ function installArcadeGames() {
           '<b>' + amount + '</b><small>⭐</small>' +
         '</div>'
       ).join('');
+      const pegs = board.querySelector('.plinko-pegs');
+      if (pegs && !pegs.dataset.rendered) {
+        pegs.dataset.rendered = '1';
+        pegs.innerHTML = pegYPositions.map((top, rowIndex) =>
+          pegXPositions.map((left, columnIndex) =>
+            '<span class="plinko-peg" style="left:' + left + '%;top:' + top + 'px;animation-delay:' + ((rowIndex + columnIndex) * 18) + 'ms"></span>'
+          ).join('')
+        ).join('');
+      }
       dropsElement.textContent = dropsLeft;
       starsElement.textContent = roundStars;
       laneLabel.textContent = selectedLane === 0 ? 'LEFT' : selectedLane === 1 ? 'CENTER' : 'RIGHT';
@@ -260,36 +275,97 @@ function installArcadeGames() {
       dropsLeft -= 1;
       render();
 
-      const pegRows = 8;
-      const path = [];
-      let slotIndex = selectedLane === 0 ? 1 : selectedLane === 1 ? 4 : 7;
-      for (let row = 0; row < pegRows; row += 1) {
-        const drift = Math.random() < .5 ? -1 : 1;
-        slotIndex = Math.max(0, Math.min(8, slotIndex + drift));
-        path.push(slotIndex);
+      const tokenEl = token;
+      const boardRect = board.getBoundingClientRect();
+      const boardWidth = boardRect.width || 620;
+      const boardHeight = boardRect.height || 390;
+      let x = boardWidth * ([0.16, 0.5, 0.84][selectedLane]);
+      let y = 34;
+      let vx = selectedLane === 0 ? -32 : selectedLane === 2 ? 32 : (Math.random() < .5 ? -18 : 18);
+      let vy = 0;
+      let landed = false;
+      let slotIndex = 4;
+      const gravity = 1780;
+      const damping = .72;
+      const pegRadius = 10;
+
+      tokenEl.style.opacity = '1';
+      tokenEl.style.left = (x / boardWidth * 100) + '%';
+      tokenEl.style.top = y + 'px';
+      tokenEl.style.transform = 'translate(-50%, -50%)';
+      tokenEl.classList.add('fall');
+
+      const pegs = pegXPositions.flatMap((left, columnIndex) =>
+        pegYPositions.map((top, rowIndex) => ({
+          x: boardWidth * (left / 100),
+          y: top,
+          parity: (rowIndex + columnIndex) % 2
+        }))
+      );
+
+      let lastTime = performance.now();
+      function animate(now) {
+        if (landed) return;
+        const delta = Math.min(.032, (now - lastTime) / 1000);
+        lastTime = now;
+
+        vy += gravity * delta;
+        x += vx * delta;
+        y += vy * delta;
+
+        if (x <= 30) {
+          x = 30;
+          vx = Math.abs(vx) * damping;
+        }
+        if (x >= boardWidth - 30) {
+          x = boardWidth - 30;
+          vx = -Math.abs(vx) * damping;
+        }
+
+        pegs.forEach(peg => {
+          const dx = x - peg.x;
+          const dy = y - peg.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < pegRadius + 14 && vy > -220) {
+            const bounceSide = dx >= 0 ? 1 : -1;
+            x = peg.x + bounceSide * (pegRadius + 16);
+            y = peg.y + pegRadius + 16;
+            vx = (Math.abs(vx) + 30 + Math.random() * 42) * bounceSide * (Math.random() < .1 ? -1 : 1);
+            vy = Math.max(-220, -Math.abs(vy) * .58 - 120);
+            pegHitFlash = 1;
+          }
+        });
+
+        const slotWidth = boardWidth / 9;
+        slotIndex = Math.max(0, Math.min(8, Math.floor(x / slotWidth)));
+        tokenEl.style.left = x + 'px';
+        tokenEl.style.top = y + 'px';
+
+        if (y >= boardHeight - 62) {
+          landed = true;
+          tokenEl.classList.remove('fall');
+          tokenEl.style.left = (slotIndex / 8 * 100) + '%';
+          tokenEl.style.top = 'calc(100% - 44px)';
+          const payout = laneRewards[slotIndex];
+          roundStars += payout;
+          statusElement.textContent = 'The star bounced into a ' + payout + ' star slot.';
+          render();
+          dropping = false;
+          if (dropsLeft <= 0) finishRound();
+          return;
+        }
+
+        if (pegHitFlash > 0) {
+          tokenEl.style.filter = 'drop-shadow(0 0 12px #fff)';
+          pegHitFlash = Math.max(0, pegHitFlash - delta * 4);
+        } else {
+          tokenEl.style.filter = '';
+        }
+
+        plinkoFrame = requestAnimationFrame(animate);
       }
-      const payout = laneRewards[slotIndex];
-      token.style.opacity = '1';
-      token.style.left = [20, 50, 80][selectedLane] + '%';
-      token.style.top = '16px';
-      token.textContent = '⭐';
-      token.classList.add('fall');
 
-      path.forEach((step, index) => {
-        timers.push(setTimeout(() => {
-          token.style.left = [6, 16, 27, 39, 50, 61, 73, 84, 94][step] + '%';
-          token.style.top = (72 + index * 30) + 'px';
-        }, 130 + index * 96));
-      });
-
-      timers.push(setTimeout(() => {
-        token.classList.remove('fall');
-        roundStars += payout;
-        statusElement.textContent = 'The star bounced into a ' + payout + ' star slot.';
-        render();
-        dropping = false;
-        if (dropsLeft <= 0) finishRound();
-      }, 130 + pegRows * 96 + 180));
+      plinkoFrame = requestAnimationFrame(animate);
     }
 
     function startRound() {
@@ -305,6 +381,7 @@ function installArcadeGames() {
       dropping = false;
       dropsLeft = 8;
       roundStars = 0;
+      cancelAnimationFrame(plinkoFrame);
       startButton.disabled = true;
       dropButton.disabled = false;
       startButton.textContent = 'ROUND IN PROGRESS';
@@ -347,6 +424,7 @@ function installArcadeGames() {
     render();
     cleanupGame = () => {
       active = false;
+      cancelAnimationFrame(plinkoFrame);
       timers.forEach(timer => clearTimeout(timer));
       window.removeEventListener('keydown', onKeydown);
     };

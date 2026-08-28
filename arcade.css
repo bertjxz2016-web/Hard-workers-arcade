@@ -914,34 +914,26 @@
 .plinko-pegs {
   position: absolute;
   inset: 38px 26px 98px;
-  background:
-    radial-gradient(circle at 10% 10%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 25% 10%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 40% 10%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 55% 10%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 70% 10%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 85% 10%, #fff 0 5px, transparent 6px);
-  opacity: .6;
+  pointer-events: none;
 }
 
-.plinko-pegs::before,
-.plinko-pegs::after {
-  content: '';
+.plinko-peg {
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 5% 20%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 20% 20%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 35% 20%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 50% 20%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 65% 20%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 80% 20%, #fff 0 5px, transparent 6px),
-    radial-gradient(circle at 95% 20%, #fff 0 5px, transparent 6px);
-  opacity: .8;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: radial-gradient(circle at 35% 35%, #fff, #d8ebf4 55%, #7a93aa);
+  border: 1px solid #fff9;
+  border-radius: 50%;
+  box-shadow: 0 2px 0 #0002;
+  animation: plinko-peg-glint 2.8s ease-in-out infinite;
 }
 
-.plinko-pegs::after {
-  top: 22%;
+@keyframes plinko-peg-glint {
+  50% {
+    transform: scale(1.07);
+    filter: brightness(1.08);
+  }
 }
 
 .plinko-slots {
