@@ -214,7 +214,7 @@ function installArcadeGames() {
     const highElement = arcadeBox.querySelector('#plinkoHigh');
     const laneLabel = arcadeBox.querySelector('#plinkoLane');
     const laneButtons = Array.from(arcadeBox.querySelectorAll('#plinkoLanes [data-lane]'));
-    const laneRewards = [15, 25, 45, 70, 45, 25, 15];
+    const laneRewards = [5, 10, 20, 35, 50, 35, 20, 10, 5];
     const startCost = 50;
     const timers = [];
     let active = false;
@@ -225,7 +225,7 @@ function installArcadeGames() {
 
     function render() {
       slots.innerHTML = laneRewards.map((amount, index) =>
-        '<div class="plinko-slot' + (index === 3 ? ' center' : '') + '">' +
+        '<div class="plinko-slot' + (index === 4 ? ' center' : '') + '">' +
           '<b>' + amount + '</b><small>⭐</small>' +
         '</div>'
       ).join('');
@@ -260,7 +260,14 @@ function installArcadeGames() {
       dropsLeft -= 1;
       render();
 
-      const slotIndex = Math.max(0, Math.min(6, 3 + (selectedLane - 1) * 2 + (dropsLeft % 2 === 0 ? 0 : (selectedLane === 1 ? 0 : selectedLane === 0 ? -1 : 1))));
+      const pegRows = 8;
+      const path = [];
+      let slotIndex = selectedLane === 0 ? 1 : selectedLane === 1 ? 4 : 7;
+      for (let row = 0; row < pegRows; row += 1) {
+        const drift = Math.random() < .5 ? -1 : 1;
+        slotIndex = Math.max(0, Math.min(8, slotIndex + drift));
+        path.push(slotIndex);
+      }
       const payout = laneRewards[slotIndex];
       token.style.opacity = '1';
       token.style.left = [20, 50, 80][selectedLane] + '%';
@@ -268,10 +275,12 @@ function installArcadeGames() {
       token.textContent = '⭐';
       token.classList.add('fall');
 
-      timers.push(setTimeout(() => {
-        token.style.top = '232px';
-        token.style.left = [18, 50, 82][slotIndex] + '%';
-      }, 180));
+      path.forEach((step, index) => {
+        timers.push(setTimeout(() => {
+          token.style.left = [6, 16, 27, 39, 50, 61, 73, 84, 94][step] + '%';
+          token.style.top = (72 + index * 30) + 'px';
+        }, 130 + index * 96));
+      });
 
       timers.push(setTimeout(() => {
         token.classList.remove('fall');
@@ -280,7 +289,7 @@ function installArcadeGames() {
         render();
         dropping = false;
         if (dropsLeft <= 0) finishRound();
-      }, 760));
+      }, 130 + pegRows * 96 + 180));
     }
 
     function startRound() {
