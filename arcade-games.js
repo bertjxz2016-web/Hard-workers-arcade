@@ -170,7 +170,7 @@ function installArcadeGames() {
           '<div class="game-stats">' +
             '<div class="game-stat"><b id="airPlayerScore">0</b><small>YOU</small></div>' +
             '<div class="game-stat"><b id="airOpponentScore">0</b><small>OPPONENT</small></div>' +
-            '<div class="game-stat"><b id="airTime">45</b><small>SECONDS</small></div>' +
+            '<div class="game-stat"><b id="airTime">FIRST TO 5</b><small>POINTS</small></div>' +
             '<div class="game-stat"><b id="airModeLabel">VS AI</b><small>MODE</small></div>' +
           '</div>' +
         '</div>' +
@@ -202,7 +202,6 @@ function installArcadeGames() {
     const statusElement = arcadeBox.querySelector('#airStatus');
     const playerScoreElement = arcadeBox.querySelector('#airPlayerScore');
     const opponentScoreElement = arcadeBox.querySelector('#airOpponentScore');
-    const timeElement = arcadeBox.querySelector('#airTime');
     const modeLabel = arcadeBox.querySelector('#airModeLabel');
     const BOARD_WIDTH = 640;
     const BOARD_HEIGHT = 320;
@@ -217,8 +216,6 @@ function installArcadeGames() {
     let running = false;
     let playerScore = 0;
     let opponentScore = 0;
-    let timeLeft = 45;
-    let roundStart = 0;
     let lastFrame = 0;
     let raf = 0;
     let restartTimer = 0;
@@ -243,7 +240,6 @@ function installArcadeGames() {
       opponentPaddle.style.top = opponentY / BOARD_HEIGHT * 100 + '%';
       playerScoreElement.textContent = playerScore;
       opponentScoreElement.textContent = opponentScore;
-      timeElement.textContent = Math.max(0, Math.ceil(timeLeft));
       modeLabel.textContent = mode === 'ai' ? 'VS AI' : '2 PLAYER';
     }
 
@@ -282,7 +278,6 @@ function installArcadeGames() {
       }
 
       if (playerScore >= 5 || opponentScore >= 5) {
-        timeLeft = 0;
         render();
         finishRound();
       }
@@ -293,7 +288,6 @@ function installArcadeGames() {
       if (!lastFrame) lastFrame = now;
       const delta = Math.min(.032, (now - lastFrame) / 1000);
       lastFrame = now;
-      timeLeft = Math.max(0, 45 - (now - roundStart) / 1000);
 
       playerX = clamp(playerX + ((keys.a ? -1 : 0) + (keys.d ? 1 : 0)) * 290 * delta, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
       playerY = clamp(playerY + ((keys.w ? -1 : 0) + (keys.s ? 1 : 0)) * 280 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
@@ -359,11 +353,6 @@ function installArcadeGames() {
           puck.vx = -Math.abs(puck.vx);
           puck.vy *= .92;
         }
-      }
-
-      if (timeLeft <= 0) {
-        finishRound();
-        return;
       }
 
       render();
