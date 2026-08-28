@@ -178,7 +178,7 @@ function installArcadeGames() {
             '<div class="game-stat"><b id="plinkoDrops">8</b><small>DROPS LEFT</small></div>' +
             '<div class="game-stat"><b id="plinkoStars">0</b><small>ROUND STARS</small></div>' +
             '<div class="game-stat"><b id="plinkoHigh">' + getHighScore('plinko') + '</b><small>BEST ROUND</small></div>' +
-            '<div class="game-stat"><b id="plinkoLane">CENTER</b><small>DROP LANE</small></div>' +
+            '<div class="game-stat"><b id="plinkoLane">SINGLE</b><small>DROP</small></div>' +
           '</div>' +
         '</div>' +
         '<div class="game-panel">' +
@@ -188,12 +188,7 @@ function installArcadeGames() {
             '<div class="plinko-token" id="plinkoToken">⭐</div>' +
             '<div class="plinko-slots" id="plinkoSlots"></div>' +
           '</div>' +
-          '<div class="game-status" id="plinkoStatus">Use the lane buttons or arrow keys, then drop a star into the board.</div>' +
-          '<div class="coin-lane-controls" id="plinkoLanes">' +
-            '<button class="game-action secondary" type="button" data-lane="0">LEFT</button>' +
-            '<button class="game-action" type="button" data-lane="1">CENTER</button>' +
-            '<button class="game-action secondary" type="button" data-lane="2">RIGHT</button>' +
-          '</div>' +
+          '<div class="game-status" id="plinkoStatus">Drop a star and let the pegs decide where it lands.</div>' +
           '<div class="game-actions">' +
             '<button class="game-action" id="plinkoDrop" type="button" disabled>DROP STAR</button>' +
             '<button class="game-action secondary" id="plinkoStart" type="button">START ROUND · 50 ⭐</button>' +
@@ -213,12 +208,10 @@ function installArcadeGames() {
     const starsElement = arcadeBox.querySelector('#plinkoStars');
     const highElement = arcadeBox.querySelector('#plinkoHigh');
     const laneLabel = arcadeBox.querySelector('#plinkoLane');
-    const laneButtons = Array.from(arcadeBox.querySelectorAll('#plinkoLanes [data-lane]'));
     const laneRewards = [5, 10, 20, 35, 50, 35, 20, 10, 5];
     const startCost = 50;
     const timers = [];
     let active = false;
-    let selectedLane = 1;
     let dropsLeft = 8;
     let roundStars = 0;
     let dropping = false;
@@ -242,11 +235,7 @@ function installArcadeGames() {
       ).join('');
       dropsElement.textContent = dropsLeft;
       starsElement.textContent = roundStars;
-      laneLabel.textContent = selectedLane === 0 ? 'LEFT' : selectedLane === 1 ? 'CENTER' : 'RIGHT';
-      laneButtons.forEach((button, index) => {
-        button.classList.toggle('secondary', index !== selectedLane);
-        button.classList.toggle('active', index === selectedLane);
-      });
+      laneLabel.textContent = 'SINGLE';
     }
 
     function finishRound() {
@@ -275,9 +264,9 @@ function installArcadeGames() {
       const boardRect = board.getBoundingClientRect();
       const boardWidth = boardRect.width || 620;
       const boardHeight = boardRect.height || 390;
-      let x = boardWidth * ([0.16, 0.5, 0.84][selectedLane]);
+      let x = boardWidth * 0.5;
       let y = 34;
-      let vx = selectedLane === 0 ? -24 : selectedLane === 2 ? 24 : (Math.random() < .5 ? -14 : 14);
+      let vx = (Math.random() < .5 ? -14 : 14);
       let vy = 0;
       let landed = false;
       let slotIndex = 4;
@@ -382,30 +371,14 @@ function installArcadeGames() {
       render();
     }
 
-    function selectLane(index) {
-      selectedLane = Math.max(0, Math.min(2, index));
-      render();
-    }
-
     function onKeydown(event) {
       if (!active) return;
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        selectLane(selectedLane - 1);
-      }
-      if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        selectLane(selectedLane + 1);
-      }
       if (event.key === ' ' || event.key === 'ArrowDown' || event.key === 'Enter') {
         event.preventDefault();
         dropStar();
       }
     }
 
-    laneButtons.forEach(button => {
-      button.addEventListener('click', () => selectLane(Number(button.dataset.lane)));
-    });
     startButton.addEventListener('click', startRound);
     dropButton.addEventListener('click', dropStar);
     window.addEventListener('keydown', onKeydown);
