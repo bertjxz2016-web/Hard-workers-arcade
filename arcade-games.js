@@ -250,8 +250,8 @@ function installArcadeGames() {
     function resetPuck(direction) {
       puck.x = BOARD_WIDTH / 2;
       puck.y = BOARD_HEIGHT / 2;
-      puck.vx = direction * 240;
-      puck.vy = direction > 0 ? 68 : -68;
+      puck.vx = direction * 300;
+      puck.vy = direction > 0 ? 82 : -82;
     }
 
     function finishRound() {
@@ -259,7 +259,7 @@ function installArcadeGames() {
       running = false;
       cancelAnimationFrame(raf);
       clearTimeout(restartTimer);
-      const payout = Math.max(5, playerScore * 14 + Math.max(0, Math.floor(timeLeft * 2)) + Math.max(0, playerScore - opponentScore) * 6);
+      const payout = Math.max(5, playerScore * 18 + Math.max(0, Math.floor(timeLeft * 2)) + Math.max(0, playerScore - opponentScore) * 8);
       const high = saveHighScore('air', playerScore);
       awardTickets(payout, 'Air Hockey');
       showToast('Air Hockey finished. ' + playerScore + ' to ' + opponentScore + ' paid +' + payout + ' tickets.');
@@ -281,7 +281,7 @@ function installArcadeGames() {
         resetPuck(1);
       }
 
-      if (playerScore >= 7 || opponentScore >= 7) {
+      if (playerScore >= 5 || opponentScore >= 5) {
         timeLeft = 0;
         render();
         finishRound();
@@ -301,11 +301,11 @@ function installArcadeGames() {
       if (mode === 'ai') {
         const pursuitX = puck.vx > 0 ? puck.x : RIGHT_LIMIT - 70;
         const pursuitY = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
-        opponentX += clamp(pursuitX - opponentX, -190 * delta, 190 * delta);
-        opponentY += clamp(pursuitY - opponentY, -185 * delta, 185 * delta);
+        opponentX += clamp(pursuitX - opponentX, -230 * delta, 230 * delta);
+        opponentY += clamp(pursuitY - opponentY, -220 * delta, 220 * delta);
       } else {
-        opponentX = clamp(opponentX + ((keys.left ? -1 : 0) + (keys.right ? 1 : 0)) * 290 * delta, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
-        opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 280 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+        opponentX = clamp(opponentX + ((keys.left ? -1 : 0) + (keys.right ? 1 : 0)) * 340 * delta, CENTER_LINE + PADDLE_RADIUS, RIGHT_LIMIT);
+        opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 320 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
       }
 
       playerX = clamp(playerX, LEFT_LIMIT, CENTER_LINE - PADDLE_RADIUS);
@@ -328,18 +328,18 @@ function installArcadeGames() {
 
       if (playerHit) {
         puck.x = playerX + PADDLE_RADIUS + PUCK_RADIUS + 1;
-        puck.vx = Math.abs(puck.vx) * 1.05;
-        puck.vy += (puck.y - playerY) * 3.6;
+        puck.vx = Math.abs(puck.vx) * 1.09;
+        puck.vy += (puck.y - playerY) * 4.2;
       }
 
       if (opponentHit) {
         puck.x = opponentX - PADDLE_RADIUS - PUCK_RADIUS - 1;
-        puck.vx = -Math.abs(puck.vx) * 1.05;
-        puck.vy += (puck.y - opponentY) * 3.6;
+        puck.vx = -Math.abs(puck.vx) * 1.09;
+        puck.vy += (puck.y - opponentY) * 4.2;
       }
 
-      puck.vx = clamp(puck.vx, -380, 380);
-      puck.vy = clamp(puck.vy, -240, 240);
+      puck.vx = clamp(puck.vx, -460, 460);
+      puck.vy = clamp(puck.vy, -280, 280);
 
       if (puck.x < -20) {
         if (puck.y >= GOAL_TOP && puck.y <= GOAL_BOTTOM) {
