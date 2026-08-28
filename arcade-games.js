@@ -222,12 +222,17 @@ function installArcadeGames() {
     let dropsLeft = 8;
     let roundStars = 0;
     let dropping = false;
-    let pegHitFlash = 0;
     let plinkoFrame = 0;
-    const pegColumns = 9;
-    const pegRows = 8;
     const pegXPositions = [6, 16, 27, 39, 50, 61, 73, 84, 94];
     const pegYPositions = [72, 102, 132, 162, 192, 222, 252, 282];
+    const pegs = pegYPositions.flatMap((top, rowIndex) =>
+      pegXPositions.map((left, columnIndex) => ({
+        x: 0,
+        y: top,
+        left,
+        parity: (rowIndex + columnIndex) % 2
+      }))
+    );
 
     function render() {
       slots.innerHTML = laneRewards.map((amount, index) =>
@@ -235,15 +240,6 @@ function installArcadeGames() {
           '<b>' + amount + '</b><small>⭐</small>' +
         '</div>'
       ).join('');
-      const pegs = board.querySelector('.plinko-pegs');
-      if (pegs && !pegs.dataset.rendered) {
-        pegs.dataset.rendered = '1';
-        pegs.innerHTML = pegYPositions.map((top, rowIndex) =>
-          pegXPositions.map((left, columnIndex) =>
-            '<span class="plinko-peg" style="left:' + left + '%;top:' + top + 'px;animation-delay:' + ((rowIndex + columnIndex) * 18) + 'ms"></span>'
-          ).join('')
-        ).join('');
-      }
       dropsElement.textContent = dropsLeft;
       starsElement.textContent = roundStars;
       laneLabel.textContent = selectedLane === 0 ? 'LEFT' : selectedLane === 1 ? 'CENTER' : 'RIGHT';
@@ -281,27 +277,21 @@ function installArcadeGames() {
       const boardHeight = boardRect.height || 390;
       let x = boardWidth * ([0.16, 0.5, 0.84][selectedLane]);
       let y = 34;
-      let vx = selectedLane === 0 ? -32 : selectedLane === 2 ? 32 : (Math.random() < .5 ? -18 : 18);
+      let vx = selectedLane === 0 ? -24 : selectedLane === 2 ? 24 : (Math.random() < .5 ? -14 : 14);
       let vy = 0;
       let landed = false;
       let slotIndex = 4;
-      const gravity = 1780;
-      const damping = .72;
+      const gravity = 1760;
+      const damping = .74;
       const pegRadius = 10;
+      const pegXs = [6, 16, 27, 39, 50, 61, 73, 84, 94].map(value => boardWidth * (value / 100));
+      const pegYs = pegYPositions;
 
       tokenEl.style.opacity = '1';
       tokenEl.style.left = (x / boardWidth * 100) + '%';
       tokenEl.style.top = y + 'px';
       tokenEl.style.transform = 'translate(-50%, -50%)';
       tokenEl.classList.add('fall');
-
-      const pegs = pegXPositions.flatMap((left, columnIndex) =>
-        pegYPositions.map((top, rowIndex) => ({
-          x: boardWidth * (left / 100),
-          y: top,
-          parity: (rowIndex + columnIndex) % 2
-        }))
-      );
 
       let lastTime = performance.now();
       function animate(now) {
@@ -322,7 +312,10 @@ function installArcadeGames() {
           vx = -Math.abs(vx) * damping;
         }
 
-        pegs.forEach(peg => {
+        for (let index = 0; index < pegs.length; index += 1) {
+          const peg = pegs[index];
+          peg.x = pegXs[peg.left > 90 ? 8 : peg.left > 80 ? 7 : peg.left > 70 ? 6 : peg.left > 60 ? 5 : peg.left > 50 ? 4 : peg.left > 40 ? 3 : peg.left > 30 ? 2 : peg.left > 20 ? 1 : 0];
+          if (Math.abs(y - peg.y) > 36) continue;
           const dx = x - peg.x;
           const dy = y - peg.y;
           const distance = Math.hypot(dx, dy);
@@ -330,11 +323,12 @@ function installArcadeGames() {
             const bounceSide = dx >= 0 ? 1 : -1;
             x = peg.x + bounceSide * (pegRadius + 16);
             y = peg.y + pegRadius + 16;
-            vx = (Math.abs(vx) + 30 + Math.random() * 42) * bounceSide * (Math.random() < .1 ? -1 : 1);
-            vy = Math.max(-220, -Math.abs(vy) * .58 - 120);
-            pegHitFlash = 1;
+            vx = (Math.abs(vx) + 18 + Math.random() * 18) * bounceSide;
+            vy = Math.max(-220, -Math.abs(vy) * .6 - 110);
+            tokenEl.style.transform = 'translate(-50%, -50%) rotate(' + (bounceSide * 12) + 'deg)';
+            break;
           }
-        });
+        }
 
         const slotWidth = boardWidth / 9;
         slotIndex = Math.max(0, Math.min(8, Math.floor(x / slotWidth)));
@@ -355,12 +349,7 @@ function installArcadeGames() {
           return;
         }
 
-        if (pegHitFlash > 0) {
-          tokenEl.style.filter = 'drop-shadow(0 0 12px #fff)';
-          pegHitFlash = Math.max(0, pegHitFlash - delta * 4);
-        } else {
-          tokenEl.style.filter = '';
-        }
+        tokenEl.style.filter = '';
 
         plinkoFrame = requestAnimationFrame(animate);
       }
