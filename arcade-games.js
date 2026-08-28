@@ -28,6 +28,12 @@ function installArcadeGames() {
       meta: 'PRIZE PUSHER',
       preview: 'coin-preview'
     },
+    plinko: {
+      title: 'Plinko Stars',
+      description: 'Drop a star token and watch it bounce into prize slots for more stars.',
+      meta: 'STARS IN, STARS OUT',
+      preview: 'plinko-preview'
+    },
     tower: {
       title: 'Crazy Tower',
       description: 'Stack ten floors while the required overlap tightens and every bounce accelerates.',
@@ -158,7 +164,183 @@ function installArcadeGames() {
     if (game === 'air') setupAirHockey();
     if (game === 'claw') setupClawGrab();
     if (game === 'coin') setupCoinPush();
+    if (game === 'plinko') setupPlinkoStars();
     if (game === 'tower') setupCrazyTower();
+  }
+
+  function setupPlinkoStars() {
+    arcadeBox.innerHTML =
+      topbar(true) +
+      '<section class="arcade-game">' +
+        '<div class="game-intro">' +
+          '<div><div class="kicker">STARS / DROP & BOUNCE</div><h2>Plinko <span>Stars</span></h2><p>Spend stars to drop a token, then watch it bounce into a slot that pays stars back. Very simple, very satisfying.</p></div>' +
+          '<div class="game-stats">' +
+            '<div class="game-stat"><b id="plinkoDrops">8</b><small>DROPS LEFT</small></div>' +
+            '<div class="game-stat"><b id="plinkoStars">0</b><small>ROUND STARS</small></div>' +
+            '<div class="game-stat"><b id="plinkoHigh">' + getHighScore('plinko') + '</b><small>BEST ROUND</small></div>' +
+            '<div class="game-stat"><b id="plinkoLane">CENTER</b><small>DROP LANE</small></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="game-panel">' +
+          '<div class="plinko-board" id="plinkoBoard" tabindex="0" aria-label="Plinko stars board">' +
+            '<div class="plinko-top">DROP A STAR</div>' +
+            '<div class="plinko-pegs" aria-hidden="true"></div>' +
+            '<div class="plinko-token" id="plinkoToken">⭐</div>' +
+            '<div class="plinko-slots" id="plinkoSlots"></div>' +
+          '</div>' +
+          '<div class="game-status" id="plinkoStatus">Use the lane buttons or arrow keys, then drop a star into the board.</div>' +
+          '<div class="coin-lane-controls" id="plinkoLanes">' +
+            '<button class="game-action secondary" type="button" data-lane="0">LEFT</button>' +
+            '<button class="game-action" type="button" data-lane="1">CENTER</button>' +
+            '<button class="game-action secondary" type="button" data-lane="2">RIGHT</button>' +
+          '</div>' +
+          '<div class="game-actions">' +
+            '<button class="game-action" id="plinkoDrop" type="button" disabled>DROP STAR</button>' +
+            '<button class="game-action secondary" id="plinkoStart" type="button">START ROUND · 50 ⭐</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+
+    bindTopbar(true);
+
+    const board = arcadeBox.querySelector('#plinkoBoard');
+    const token = arcadeBox.querySelector('#plinkoToken');
+    const slots = arcadeBox.querySelector('#plinkoSlots');
+    const statusElement = arcadeBox.querySelector('#plinkoStatus');
+    const startButton = arcadeBox.querySelector('#plinkoStart');
+    const dropButton = arcadeBox.querySelector('#plinkoDrop');
+    const dropsElement = arcadeBox.querySelector('#plinkoDrops');
+    const starsElement = arcadeBox.querySelector('#plinkoStars');
+    const highElement = arcadeBox.querySelector('#plinkoHigh');
+    const laneLabel = arcadeBox.querySelector('#plinkoLane');
+    const laneButtons = Array.from(arcadeBox.querySelectorAll('#plinkoLanes [data-lane]'));
+    const laneRewards = [15, 25, 45, 70, 45, 25, 15];
+    const startCost = 50;
+    const timers = [];
+    let active = false;
+    let selectedLane = 1;
+    let dropsLeft = 8;
+    let roundStars = 0;
+    let dropping = false;
+
+    function render() {
+      slots.innerHTML = laneRewards.map((amount, index) =>
+        '<div class="plinko-slot' + (index === 3 ? ' center' : '') + '">' +
+          '<b>' + amount + '</b><small>⭐</small>' +
+        '</div>'
+      ).join('');
+      dropsElement.textContent = dropsLeft;
+      starsElement.textContent = roundStars;
+      laneLabel.textContent = selectedLane === 0 ? 'LEFT' : selectedLane === 1 ? 'CENTER' : 'RIGHT';
+      laneButtons.forEach((button, index) => {
+        button.classList.toggle('secondary', index !== selectedLane);
+        button.classList.toggle('active', index === selectedLane);
+      });
+    }
+
+    function finishRound() {
+      active = false;
+      dropping = false;
+      dropButton.disabled = true;
+      const payout = Math.max(5, roundStars);
+      const high = saveHighScore('plinko', roundStars);
+      highElement.textContent = high;
+      points += payout;
+      sync();
+      starsElement.textContent = roundStars;
+      statusElement.textContent = 'Round complete. You won ' + roundStars + ' stars and added +' + payout + ' more stars to your bank.';
+      showToast('Plinko Stars paid +' + payout + ' stars!');
+      startButton.disabled = false;
+      startButton.textContent = 'PLAY AGAIN · 50 ⭐';
+    }
+
+    function dropStar() {
+      if (!active || dropping || dropsLeft <= 0) return;
+      dropping = true;
+      dropsLeft -= 1;
+      render();
+
+      const slotIndex = Math.max(0, Math.min(6, 3 + (selectedLane - 1) * 2 + (dropsLeft % 2 === 0 ? 0 : (selectedLane === 1 ? 0 : selectedLane === 0 ? -1 : 1))));
+      const payout = laneRewards[slotIndex];
+      token.style.opacity = '1';
+      token.style.left = [20, 50, 80][selectedLane] + '%';
+      token.style.top = '16px';
+      token.textContent = '⭐';
+      token.classList.add('fall');
+
+      timers.push(setTimeout(() => {
+        token.style.top = '232px';
+        token.style.left = [18, 50, 82][slotIndex] + '%';
+      }, 180));
+
+      timers.push(setTimeout(() => {
+        token.classList.remove('fall');
+        roundStars += payout;
+        statusElement.textContent = 'The star bounced into a ' + payout + ' star slot.';
+        render();
+        dropping = false;
+        if (dropsLeft <= 0) finishRound();
+      }, 760));
+    }
+
+    function startRound() {
+      if (points < startCost) {
+        statusElement.textContent = 'You need 50 stars to start a Plinko round.';
+        showToast('You need 50 more stars to play Plinko Stars.');
+        return;
+      }
+
+      points -= startCost;
+      sync();
+      active = true;
+      dropping = false;
+      dropsLeft = 8;
+      roundStars = 0;
+      startButton.disabled = true;
+      dropButton.disabled = false;
+      startButton.textContent = 'ROUND IN PROGRESS';
+      statusElement.textContent = 'Each drop costs stars. The board pays stars back when the token lands.';
+      token.style.opacity = '1';
+      token.style.top = '16px';
+      token.style.left = '50%';
+      token.classList.remove('fall');
+      render();
+    }
+
+    function selectLane(index) {
+      selectedLane = Math.max(0, Math.min(2, index));
+      render();
+    }
+
+    function onKeydown(event) {
+      if (!active) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        selectLane(selectedLane - 1);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        selectLane(selectedLane + 1);
+      }
+      if (event.key === ' ' || event.key === 'ArrowDown' || event.key === 'Enter') {
+        event.preventDefault();
+        dropStar();
+      }
+    }
+
+    laneButtons.forEach(button => {
+      button.addEventListener('click', () => selectLane(Number(button.dataset.lane)));
+    });
+    startButton.addEventListener('click', startRound);
+    dropButton.addEventListener('click', dropStar);
+    window.addEventListener('keydown', onKeydown);
+
+    render();
+    cleanupGame = () => {
+      active = false;
+      timers.forEach(timer => clearTimeout(timer));
+      window.removeEventListener('keydown', onKeydown);
+    };
   }
 
   function setupAirHockey() {

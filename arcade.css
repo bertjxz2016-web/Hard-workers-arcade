@@ -301,6 +301,38 @@
   filter: drop-shadow(3px 4px 0 #0002);
 }
 
+.plinko-preview {
+  background:
+    radial-gradient(circle at 50% 20%, #ffffffa8 0 12%, transparent 13%),
+    linear-gradient(165deg, #5f85b7, #d7c48a);
+}
+
+.plinko-preview::before {
+  content: '';
+  position: absolute;
+  inset: 17px 26px 28px;
+  background:
+    radial-gradient(circle at 20% 18%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 50% 18%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 80% 18%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 32% 42%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 68% 42%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 20% 66%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 50% 66%, #fff 0 8%, transparent 9%),
+    radial-gradient(circle at 80% 66%, #fff 0 8%, transparent 9%);
+  opacity: .75;
+}
+
+.plinko-preview::after {
+  content: '⭐';
+  position: absolute;
+  right: 30px;
+  bottom: 18px;
+  color: #fff;
+  font-size: 46px;
+  filter: drop-shadow(0 5px 6px #0004);
+}
+
 .arcade-rule {
   display: flex;
   align-items: center;
@@ -843,6 +875,139 @@
   opacity: .1;
 }
 
+/* Plinko */
+.plinko-board {
+  position: relative;
+  width: min(620px, 100%);
+  height: 390px;
+  margin: auto;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 10%, #ffffff55 0 10%, transparent 11%),
+    linear-gradient(180deg, #24445f, #8ab1c7 68%, #d8bc85);
+  border: 9px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 3px #ffffff2d, inset 0 -26px 0 #8c6b47, 0 10px 0 #b9aa99;
+}
+
+.plinko-board::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  left: 16px;
+  height: 5px;
+  background: #fff8;
+}
+
+.plinko-top {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  left: 0;
+  color: white;
+  font: 700 11px 'Space Grotesk', sans-serif;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.plinko-pegs {
+  position: absolute;
+  inset: 38px 26px 98px;
+  background:
+    radial-gradient(circle at 10% 10%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 25% 10%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 40% 10%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 55% 10%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 70% 10%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 85% 10%, #fff 0 5px, transparent 6px);
+  opacity: .6;
+}
+
+.plinko-pegs::before,
+.plinko-pegs::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 5% 20%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 20% 20%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 35% 20%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 50% 20%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 65% 20%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 80% 20%, #fff 0 5px, transparent 6px),
+    radial-gradient(circle at 95% 20%, #fff 0 5px, transparent 6px);
+  opacity: .8;
+}
+
+.plinko-pegs::after {
+  top: 22%;
+}
+
+.plinko-slots {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.plinko-slot {
+  min-height: 66px;
+  padding: 8px 4px 6px;
+  color: #fff;
+  background: #00000058;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.plinko-slot.center {
+  background: linear-gradient(180deg, #f36b42, #c74e2c);
+}
+
+.plinko-slot b {
+  display: block;
+  font: 700 22px 'Space Grotesk', sans-serif;
+}
+
+.plinko-slot small {
+  display: block;
+  font: 700 8px 'Space Grotesk', sans-serif;
+  letter-spacing: 1px;
+}
+
+.plinko-token {
+  position: absolute;
+  z-index: 4;
+  top: 16px;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  color: #fff;
+  background: radial-gradient(circle at 36% 32%, #fff, #f5bd4f 55%, #d18d1f);
+  border: 3px solid #fff8;
+  border-radius: 50%;
+  box-shadow: 0 10px 10px #0004;
+  font-size: 17px;
+  line-height: 28px;
+  text-align: center;
+  transition: top .2s ease-out, left .2s ease-out, opacity .2s;
+}
+
+.plinko-token.fall {
+  animation: plinko-drop .7s linear;
+}
+
+@keyframes plinko-drop {
+  0% { transform: translateY(0) rotate(0deg); }
+  35% { transform: translateY(115px) rotate(-16deg); }
+  70% { transform: translateY(220px) rotate(14deg); }
+  100% { transform: translateY(292px) rotate(0deg); }
+}
+
 @media (max-width: 760px) {
   .arcade-box {
     min-height: 0;
@@ -930,6 +1095,14 @@
   .coin-push-item,
   .coin-push-edge {
     min-height: 36px;
+  }
+
+  .plinko-board {
+    height: 340px;
+  }
+
+  .plinko-slot {
+    min-height: 52px;
   }
 
   .air-paddle {
