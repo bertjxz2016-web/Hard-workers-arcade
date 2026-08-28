@@ -210,6 +210,8 @@ function installArcadeGames() {
     const PADDLE_RADIUS = 26;
     const LEFT_X = 58;
     const RIGHT_X = BOARD_WIDTH - 58;
+    const GOAL_TOP = BOARD_HEIGHT / 2 - 52;
+    const GOAL_BOTTOM = BOARD_HEIGHT / 2 + 52;
     let mode = 'ai';
     let running = false;
     let playerScore = 0;
@@ -245,8 +247,8 @@ function installArcadeGames() {
     function resetPuck(direction) {
       puck.x = BOARD_WIDTH / 2;
       puck.y = BOARD_HEIGHT / 2;
-      puck.vx = direction * 220;
-      puck.vy = direction > 0 ? 72 : -72;
+      puck.vx = direction * 170;
+      puck.vy = direction > 0 ? 52 : -52;
     }
 
     function finishRound() {
@@ -295,9 +297,9 @@ function installArcadeGames() {
 
       if (mode === 'ai') {
         const pursuit = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
-        opponentY += clamp(pursuit - opponentY, -250 * delta, 250 * delta);
+        opponentY += clamp(pursuit - opponentY, -185 * delta, 185 * delta);
       } else {
-        opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 330 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
+        opponentY = clamp(opponentY + ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 280 * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
       }
 
       opponentY = clamp(opponentY, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
@@ -318,25 +320,37 @@ function installArcadeGames() {
 
       if (playerHit) {
         puck.x = LEFT_X + PADDLE_RADIUS + PUCK_RADIUS + 1;
-        puck.vx = Math.abs(puck.vx) * 1.03;
-        puck.vy += (puck.y - playerY) * 5;
+        puck.vx = Math.abs(puck.vx) * 1.01;
+        puck.vy += (puck.y - playerY) * 3.2;
       }
 
       if (opponentHit) {
         puck.x = RIGHT_X - PADDLE_RADIUS - PUCK_RADIUS - 1;
-        puck.vx = -Math.abs(puck.vx) * 1.03;
-        puck.vy += (puck.y - opponentY) * 5;
+        puck.vx = -Math.abs(puck.vx) * 1.01;
+        puck.vy += (puck.y - opponentY) * 3.2;
       }
 
-      puck.vx = clamp(puck.vx, -420, 420);
-      puck.vy = clamp(puck.vy, -300, 300);
+      puck.vx = clamp(puck.vx, -320, 320);
+      puck.vy = clamp(puck.vy, -220, 220);
 
       if (puck.x < -20) {
-        goal(false);
+        if (puck.y >= GOAL_TOP && puck.y <= GOAL_BOTTOM) {
+          goal(false);
+        } else {
+          puck.x = PUCK_RADIUS;
+          puck.vx = Math.abs(puck.vx);
+          puck.vy *= .92;
+        }
       }
 
       if (puck.x > BOARD_WIDTH + 20) {
-        goal(true);
+        if (puck.y >= GOAL_TOP && puck.y <= GOAL_BOTTOM) {
+          goal(true);
+        } else {
+          puck.x = BOARD_WIDTH - PUCK_RADIUS;
+          puck.vx = -Math.abs(puck.vx);
+          puck.vy *= .92;
+        }
       }
 
       if (timeLeft <= 0) {
@@ -1013,13 +1027,13 @@ function installArcadeGames() {
         { type: 'coin' }
       ],
       [
-        { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 34 },
-        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐼', name: 'Panda Pal', tickets: 48 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 34 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐼', name: 'Panda Pal', tickets: 48 },
         { type: 'coin' }, { type: 'coin' }
       ],
       [
-        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐻', name: 'Golden Bear', tickets: 56 },
-        { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 66 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐻', name: 'Golden Bear', tickets: 56 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 66 },
         { type: 'coin' }, { type: 'coin' }
       ]
     ];
@@ -1061,7 +1075,7 @@ function installArcadeGames() {
       active = false;
       dropping = false;
       dropButton.disabled = true;
-      const payout = Math.max(5, roundTickets + Math.floor(dropsLeft / 2));
+      const payout = Math.max(5, roundTickets + Math.floor(dropsLeft / 4));
       const high = saveHighScore('coin', roundTickets);
       highElement.textContent = high;
       awardTickets(payout, 'Coin Push');
@@ -1079,7 +1093,7 @@ function installArcadeGames() {
 
       const lane = lanes[selectedLane];
       lane.unshift({ type: 'coin' });
-      const fallen = lane.length > 7 ? lane.pop() : null;
+      const fallen = lane.length > 9 ? lane.pop() : null;
       render();
 
       const coin = document.createElement('div');
