@@ -1022,22 +1022,23 @@ function installArcadeGames() {
     const laneButtons = Array.from(arcadeBox.querySelectorAll('#coinLanes [data-lane]'));
     const laneTemplates = [
       [
-        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐸', name: 'Lucky Frog', tickets: 24 },
-        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐰', name: 'Blue Bunny', tickets: 30 },
-        { type: 'coin' }
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐸', name: 'Lucky Frog', tickets: 24 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐰', name: 'Blue Bunny', tickets: 30 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }
       ],
       [
-        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 34 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦊', name: 'Sunny Fox', tickets: 34 },
         { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐼', name: 'Panda Pal', tickets: 48 },
-        { type: 'coin' }, { type: 'coin' }
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }
       ],
       [
         { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🐻', name: 'Golden Bear', tickets: 56 },
-        { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 66 },
-        { type: 'coin' }, { type: 'coin' }
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }, { type: 'prize', emoji: '🦄', name: 'Rainbow Unicorn', tickets: 66 },
+        { type: 'coin' }, { type: 'coin' }, { type: 'coin' }
       ]
     ];
     const lanes = laneTemplates.map(lane => lane.map(item => ({ ...item })));
+    const lanePressure = [0, 0, 0];
     const timers = [];
     let active = false;
     let selectedLane = 1;
@@ -1075,7 +1076,7 @@ function installArcadeGames() {
       active = false;
       dropping = false;
       dropButton.disabled = true;
-      const payout = Math.max(5, roundTickets + Math.floor(dropsLeft / 4));
+      const payout = Math.max(5, roundTickets + Math.floor(dropsLeft / 6));
       const high = saveHighScore('coin', roundTickets);
       highElement.textContent = high;
       awardTickets(payout, 'Coin Push');
@@ -1093,7 +1094,12 @@ function installArcadeGames() {
 
       const lane = lanes[selectedLane];
       lane.unshift({ type: 'coin' });
-      const fallen = lane.length > 9 ? lane.pop() : null;
+      lanePressure[selectedLane] += 1;
+      const shouldAdvance = lanePressure[selectedLane] >= 2;
+      const fallen = shouldAdvance && lane.length > 11 ? lane.pop() : null;
+      if (shouldAdvance) {
+        lanePressure[selectedLane] = 0;
+      }
       render();
 
       const coin = document.createElement('div');
@@ -1133,6 +1139,7 @@ function installArcadeGames() {
       roundTickets = 0;
       lanes.forEach((lane, laneIndex) => {
         lane.splice(0, lane.length, ...laneTemplates[laneIndex].map(item => ({ ...item })));
+        lanePressure[laneIndex] = 0;
       });
       startButton.disabled = true;
       dropButton.disabled = false;
