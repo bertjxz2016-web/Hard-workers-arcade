@@ -958,7 +958,7 @@
   left: 16px;
   display: grid;
   z-index: 5;
-  grid-template-columns: repeat(10, 1fr);
+  grid-template-columns: .45fr repeat(8, 1fr) .45fr;
   gap: 6px;
 }
 

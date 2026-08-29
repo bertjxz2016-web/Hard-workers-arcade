@@ -173,9 +173,9 @@ function installArcadeGames() {
       topbar(true) +
       '<section class="arcade-game">' +
         '<div class="game-intro">' +
-          '<div><div class="kicker">STARS / DROP & BOUNCE</div><h2>Plinko <span>Stars</span></h2><p>Spend stars to drop a token, then watch it bounce into a slot that pays stars back. Very simple, very satisfying.</p></div>' +
+          '<div><div class="kicker">STARS / DROP & BOUNCE</div><h2>Plinko <span>Stars</span></h2><p>Spend 75 stars for one ball, then watch it bounce into a slot that pays stars back. The 200-star edge slots are extra narrow.</p></div>' +
           '<div class="game-stats">' +
-            '<div class="game-stat"><b id="plinkoDrops">8</b><small>DROPS LEFT</small></div>' +
+            '<div class="game-stat"><b id="plinkoDrops">1</b><small>BALL</small></div>' +
             '<div class="game-stat"><b id="plinkoStars">0</b><small>ROUND STARS</small></div>' +
             '<div class="game-stat"><b id="plinkoHigh">' + getHighScore('plinko') + '</b><small>BEST ROUND</small></div>' +
             '<div class="game-stat"><b id="plinkoLane">SINGLE</b><small>DROP</small></div>' +
@@ -191,7 +191,7 @@ function installArcadeGames() {
           '<div class="game-status" id="plinkoStatus">Drop a star and let the pegs decide where it lands.</div>' +
           '<div class="game-actions">' +
             '<button class="game-action" id="plinkoDrop" type="button" disabled>DROP STAR</button>' +
-            '<button class="game-action secondary" id="plinkoStart" type="button">START ROUND · 75 ⭐</button>' +
+            '<button class="game-action secondary" id="plinkoStart" type="button">BUY 1 BALL · 75 ⭐</button>' +
           '</div>' +
         '</div>' +
       '</section>';
@@ -210,10 +210,11 @@ function installArcadeGames() {
     const highElement = arcadeBox.querySelector('#plinkoHigh');
     const laneLabel = arcadeBox.querySelector('#plinkoLane');
     const laneRewards = [200, 100, 50, 25, 0, 0, 25, 50, 100, 200];
+    const slotWeights = [.45, 1, 1, 1, 1, 1, 1, 1, 1, .45];
     const startCost = 75;
     const timers = [];
     let active = false;
-    let dropsLeft = 8;
+    let dropsLeft = 1;
     let roundStars = 0;
     let dropping = false;
     let plinkoFrame = 0;
@@ -250,11 +251,30 @@ function installArcadeGames() {
       laneLabel.textContent = 'SINGLE';
     }
 
+    function slotIndexForPosition(x, boardWidth) {
+      const usableLeft = 16;
+      const usableWidth = boardWidth - 32;
+      const ratio = Math.max(0, Math.min(.9999, (x - usableLeft) / usableWidth));
+      const target = ratio * slotWeights.reduce((total, weight) => total + weight, 0);
+      let total = 0;
+      for (let index = 0; index < slotWeights.length; index += 1) {
+        total += slotWeights[index];
+        if (target < total) return index;
+      }
+      return slotWeights.length - 1;
+    }
+
+    function slotCenter(index, boardWidth) {
+      const totalWeight = slotWeights.reduce((total, weight) => total + weight, 0);
+      const before = slotWeights.slice(0, index).reduce((total, weight) => total + weight, 0);
+      return 16 + (boardWidth - 32) * ((before + slotWeights[index] / 2) / totalWeight);
+    }
+
     function finishRound() {
       active = false;
       dropping = false;
       dropButton.disabled = true;
-      const payout = Math.max(5, roundStars);
+      const payout = roundStars;
       const high = saveHighScore('plinko', roundStars);
       highElement.textContent = high;
       points += payout;
@@ -263,7 +283,7 @@ function installArcadeGames() {
       statusElement.textContent = 'Round complete. You won ' + roundStars + ' stars and added +' + payout + ' more stars to your bank.';
       showToast('Plinko Stars paid +' + payout + ' stars!');
       startButton.disabled = false;
-      startButton.textContent = 'PLAY AGAIN · 75 ⭐';
+      startButton.textContent = 'BUY 1 BALL · 75 ⭐';
     }
 
     function dropStar() {
@@ -358,15 +378,14 @@ function installArcadeGames() {
           contactFrames = 0;
         }
 
-        const slotWidth = boardWidth / laneRewards.length;
-        slotIndex = Math.max(0, Math.min(laneRewards.length - 1, Math.floor(x / slotWidth)));
+        slotIndex = slotIndexForPosition(x, boardWidth);
         tokenEl.style.left = x + 'px';
         tokenEl.style.top = y + 'px';
 
         if (y >= boardHeight - 62) {
           landed = true;
           tokenEl.classList.remove('fall');
-          tokenEl.style.left = (slotIndex / (laneRewards.length - 1) * 100) + '%';
+          tokenEl.style.left = slotCenter(slotIndex, boardWidth) + 'px';
           tokenEl.style.top = 'calc(100% - 44px)';
           const payout = laneRewards[slotIndex];
           roundStars += payout;
@@ -396,13 +415,13 @@ function installArcadeGames() {
       sync();
       active = true;
       dropping = false;
-      dropsLeft = 8;
+      dropsLeft = 1;
       roundStars = 0;
       cancelAnimationFrame(plinkoFrame);
       startButton.disabled = true;
       dropButton.disabled = false;
       startButton.textContent = 'ROUND IN PROGRESS';
-      statusElement.textContent = 'Each drop costs stars. The board pays stars back when the token lands.';
+      statusElement.textContent = 'One ball costs 75 stars. The board pays stars back when it lands.';
       token.style.opacity = '1';
       token.style.top = '16px';
       token.style.left = '50%';
