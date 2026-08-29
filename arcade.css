@@ -1006,7 +1006,7 @@
 }
 
 .plinko-token.fall {
-  animation: plinko-drop .7s linear;
+  animation: none;
 }
 
 @keyframes plinko-drop {

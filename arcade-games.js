@@ -293,7 +293,6 @@ function installArcadeGames() {
       tokenEl.style.left = (x / boardWidth * 100) + '%';
       tokenEl.style.top = y + 'px';
       tokenEl.style.transform = 'translate(-50%, -50%)';
-      tokenEl.classList.add('fall');
 
       let lastTime = performance.now();
       function animate(now) {
