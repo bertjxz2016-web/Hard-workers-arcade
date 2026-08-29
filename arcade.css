@@ -929,11 +929,23 @@
   animation: plinko-peg-glint 2.8s ease-in-out infinite;
 }
 
+.plinko-peg.hit {
+  animation: plinko-peg-hit .14s ease-out;
+  background: radial-gradient(circle at 35% 35%, #fff, #fff 48%, #ffd46b 60%, #d18d1f);
+  box-shadow: 0 0 0 6px #fff2, 0 2px 0 #0002;
+}
+
 @keyframes plinko-peg-glint {
   50% {
     transform: scale(1.07);
     filter: brightness(1.08);
   }
+}
+
+@keyframes plinko-peg-hit {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.55); }
+  100% { transform: scale(1.1); }
 }
 
 .plinko-slots {

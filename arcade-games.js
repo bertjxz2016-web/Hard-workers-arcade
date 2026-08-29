@@ -200,6 +200,7 @@ function installArcadeGames() {
 
     const board = arcadeBox.querySelector('#plinkoBoard');
     const token = arcadeBox.querySelector('#plinkoToken');
+    const pegsLayer = arcadeBox.querySelector('.plinko-pegs');
     const slots = arcadeBox.querySelector('#plinkoSlots');
     const statusElement = arcadeBox.querySelector('#plinkoStatus');
     const startButton = arcadeBox.querySelector('#plinkoStart');
@@ -226,6 +227,12 @@ function installArcadeGames() {
         parity: (rowIndex + columnIndex) % 2
       }))
     );
+
+    pegsLayer.innerHTML = pegYPositions.map((top, rowIndex) =>
+      pegXPositions.map((left, columnIndex) =>
+        '<span class="plinko-peg" style="left:' + left + '%;top:' + top + 'px;animation-delay:' + ((rowIndex + columnIndex) * 14) + 'ms"></span>'
+      ).join('')
+    ).join('');
 
     function render() {
       slots.innerHTML = laneRewards.map((amount, index) =>
@@ -315,6 +322,11 @@ function installArcadeGames() {
             vx = (Math.abs(vx) + 18 + Math.random() * 18) * bounceSide;
             vy = Math.max(-220, -Math.abs(vy) * .6 - 110);
             tokenEl.style.transform = 'translate(-50%, -50%) rotate(' + (bounceSide * 12) + 'deg)';
+            const hitPeg = pegsLayer.children[index];
+            if (hitPeg) {
+              hitPeg.classList.add('hit');
+              timers.push(setTimeout(() => hitPeg.classList.remove('hit'), 120));
+            }
             break;
           }
         }
