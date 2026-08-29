@@ -220,14 +220,13 @@ function installArcadeGames() {
     // Board coordinates are shared by the drawing and the collision loop so every
     // big, bright peg is exactly where the falling star can hit it.
     const pegRows = [
-      { y: 82, xs: [50] },
-      { y: 112, xs: [43, 57] },
-      { y: 142, xs: [36, 50, 64] },
-      { y: 172, xs: [29, 43, 57, 71] },
-      { y: 202, xs: [22, 36, 50, 64, 78] },
-      { y: 232, xs: [15, 29, 43, 57, 71, 85] },
-      { y: 262, xs: [10, 23, 36, 50, 64, 77, 90] },
-      { y: 292, xs: [8, 20, 32, 44, 56, 68, 80, 92] }
+      { y: 126, xs: [50] },
+      { y: 152, xs: [43, 57] },
+      { y: 178, xs: [36, 50, 64] },
+      { y: 204, xs: [29, 43, 57, 71] },
+      { y: 230, xs: [22, 36, 50, 64, 78] },
+      { y: 256, xs: [15, 29, 43, 57, 71, 85] },
+      { y: 282, xs: [10, 23, 36, 50, 64, 77, 90] }
     ];
     const pegs = pegRows.flatMap((row, rowIndex) =>
       row.xs.map((left, columnIndex) => ({
