@@ -28,17 +28,17 @@ function installArcadeGames() {
       meta: 'PRIZE PUSHER',
       preview: 'coin-preview'
     },
-    plinko: {
-      title: 'Plinko Stars',
-      description: 'Drop a star token and watch it bounce into prize slots for more stars.',
-      meta: 'STARS IN, STARS OUT',
-      preview: 'plinko-preview'
-    },
     tower: {
       title: 'Crazy Tower',
       description: 'Stack ten floors while the required overlap tightens and every bounce accelerates.',
       meta: '50–70% OVERLAP',
       preview: 'tower-preview'
+    },
+    plinko: {
+      title: 'Plinko Stars',
+      description: 'Drop a star token and watch it bounce into prize slots for more stars.',
+      meta: 'STARS IN, STARS OUT',
+      preview: 'plinko-preview'
     }
   };
 
