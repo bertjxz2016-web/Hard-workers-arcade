@@ -209,7 +209,7 @@ function installArcadeGames() {
     const starsElement = arcadeBox.querySelector('#plinkoStars');
     const highElement = arcadeBox.querySelector('#plinkoHigh');
     const laneLabel = arcadeBox.querySelector('#plinkoLane');
-    const laneRewards = [5, 10, 20, 35, 50, 35, 20, 10, 5];
+    const laneRewards = [200, 100, 50, 25, 0, 0, 25, 50, 100, 200];
     const startCost = 50;
     const timers = [];
     let active = false;
@@ -241,7 +241,7 @@ function installArcadeGames() {
 
     function render() {
       slots.innerHTML = laneRewards.map((amount, index) =>
-        '<div class="plinko-slot' + (index === 4 ? ' center' : '') + '">' +
+        '<div class="plinko-slot' + (amount === 0 ? ' zero' : '') + '">' +
           '<b>' + amount + '</b><small>⭐</small>' +
         '</div>'
       ).join('');
@@ -358,15 +358,15 @@ function installArcadeGames() {
           contactFrames = 0;
         }
 
-        const slotWidth = boardWidth / 9;
-        slotIndex = Math.max(0, Math.min(8, Math.floor(x / slotWidth)));
+        const slotWidth = boardWidth / laneRewards.length;
+        slotIndex = Math.max(0, Math.min(laneRewards.length - 1, Math.floor(x / slotWidth)));
         tokenEl.style.left = x + 'px';
         tokenEl.style.top = y + 'px';
 
         if (y >= boardHeight - 62) {
           landed = true;
           tokenEl.classList.remove('fall');
-          tokenEl.style.left = (slotIndex / 8 * 100) + '%';
+          tokenEl.style.left = (slotIndex / (laneRewards.length - 1) * 100) + '%';
           tokenEl.style.top = 'calc(100% - 44px)';
           const payout = laneRewards[slotIndex];
           roundStars += payout;

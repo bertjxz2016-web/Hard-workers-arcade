@@ -958,7 +958,7 @@
   left: 16px;
   display: grid;
   z-index: 5;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(10, 1fr);
   gap: 6px;
 }
 
@@ -971,8 +971,10 @@
   text-align: center;
 }
 
-.plinko-slot.center {
-  background: linear-gradient(180deg, #f36b42, #c74e2c);
+.plinko-slot.zero {
+  color: #f5bd4f;
+  background: linear-gradient(180deg, #38434a, #20252c);
+  box-shadow: inset 0 0 0 1px #ffffff18;
 }
 
 .plinko-slot b {
