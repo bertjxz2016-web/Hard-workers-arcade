@@ -286,6 +286,8 @@ function installArcadeGames() {
       const gravity = 1760;
       const damping = .74;
       const pegRadius = 11;
+      const starRadius = 17;
+      const collisionRadius = pegRadius + starRadius;
 
       tokenEl.style.opacity = '1';
       tokenEl.style.left = (x / boardWidth * 100) + '%';
@@ -299,37 +301,49 @@ function installArcadeGames() {
         const delta = Math.min(.032, (now - lastTime) / 1000);
         lastTime = now;
 
-        vy += gravity * delta;
-        x += vx * delta;
-        y += vy * delta;
+        // Move in tiny physics steps: this stops a fast star from skipping over a peg.
+        const steps = Math.max(1, Math.ceil(Math.max(Math.abs(vx * delta), Math.abs(vy * delta)) / 7));
+        const stepDelta = delta / steps;
+        for (let step = 0; step < steps; step += 1) {
+          vy += gravity * stepDelta;
+          x += vx * stepDelta;
+          y += vy * stepDelta;
 
-        if (x <= 30) {
-          x = 30;
-          vx = Math.abs(vx) * damping;
-        }
-        if (x >= boardWidth - 30) {
-          x = boardWidth - 30;
-          vx = -Math.abs(vx) * damping;
-        }
+          if (x <= 30) {
+            x = 30;
+            vx = Math.abs(vx) * damping;
+          }
+          if (x >= boardWidth - 30) {
+            x = boardWidth - 30;
+            vx = -Math.abs(vx) * damping;
+          }
 
-        for (let index = 0; index < pegs.length; index += 1) {
-          const peg = pegs[index];
-          const pegX = boardWidth * (peg.left / 100);
-          if (Math.abs(y - peg.y) > 36) continue;
-          const dx = x - pegX;
-          const dy = y - peg.y;
-          const distance = Math.hypot(dx, dy);
-          if (distance < pegRadius + 14 && vy > -220) {
-            const bounceSide = dx >= 0 ? 1 : -1;
-            x = pegX + bounceSide * (pegRadius + 16);
-            y = peg.y + pegRadius + 16;
-            vx = (Math.abs(vx) + 18 + Math.random() * 18) * bounceSide;
-            vy = Math.max(-220, -Math.abs(vy) * .6 - 110);
-            tokenEl.style.transform = 'translate(-50%, -50%) rotate(' + (bounceSide * 12) + 'deg)';
-            const hitPeg = pegsLayer.children[index];
-            if (hitPeg) {
-              hitPeg.classList.add('hit');
-              timers.push(setTimeout(() => hitPeg.classList.remove('hit'), 120));
+          for (let index = 0; index < pegs.length; index += 1) {
+            const peg = pegs[index];
+            const pegX = boardWidth * (peg.left / 100);
+            const dx = x - pegX;
+            const dy = y - peg.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance >= collisionRadius) continue;
+
+            // Push the star out along the true contact angle, then reflect its velocity.
+            const normalX = distance ? dx / distance : (Math.random() < .5 ? -1 : 1);
+            const normalY = distance ? dy / distance : -1;
+            const velocityIntoPeg = vx * normalX + vy * normalY;
+            x = pegX + normalX * (collisionRadius + .5);
+            y = peg.y + normalY * (collisionRadius + .5);
+
+            if (velocityIntoPeg < 0) {
+              const bounce = 1.52;
+              vx -= bounce * velocityIntoPeg * normalX;
+              vy -= bounce * velocityIntoPeg * normalY;
+              vx += normalX * (8 + Math.random() * 12);
+              tokenEl.style.transform = 'translate(-50%, -50%) rotate(' + (normalX * 14) + 'deg)';
+              const hitPeg = pegsLayer.children[index];
+              if (hitPeg) {
+                hitPeg.classList.add('hit');
+                timers.push(setTimeout(() => hitPeg.classList.remove('hit'), 120));
+              }
             }
             break;
           }
