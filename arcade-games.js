@@ -217,21 +217,28 @@ function installArcadeGames() {
     let roundStars = 0;
     let dropping = false;
     let plinkoFrame = 0;
-    const pegXPositions = [6, 16, 27, 39, 50, 61, 73, 84, 94];
-    const pegYPositions = [72, 102, 132, 162, 192, 222, 252, 282];
-    const pegs = pegYPositions.flatMap((top, rowIndex) =>
-      pegXPositions.map((left, columnIndex) => ({
-        x: 0,
-        y: top,
+    // Board coordinates are shared by the drawing and the collision loop so every
+    // big, bright peg is exactly where the falling star can hit it.
+    const pegRows = [
+      { y: 82, xs: [50] },
+      { y: 112, xs: [43, 57] },
+      { y: 142, xs: [36, 50, 64] },
+      { y: 172, xs: [29, 43, 57, 71] },
+      { y: 202, xs: [22, 36, 50, 64, 78] },
+      { y: 232, xs: [15, 29, 43, 57, 71, 85] },
+      { y: 262, xs: [10, 23, 36, 50, 64, 77, 90] },
+      { y: 292, xs: [8, 20, 32, 44, 56, 68, 80, 92] }
+    ];
+    const pegs = pegRows.flatMap((row, rowIndex) =>
+      row.xs.map((left, columnIndex) => ({
+        y: row.y,
         left,
-        parity: (rowIndex + columnIndex) % 2
+        delay: (rowIndex + columnIndex) * 14
       }))
     );
 
-    pegsLayer.innerHTML = pegYPositions.map((top, rowIndex) =>
-      pegXPositions.map((left, columnIndex) =>
-        '<span class="plinko-peg" style="left:' + left + '%;top:' + top + 'px;animation-delay:' + ((rowIndex + columnIndex) * 14) + 'ms"></span>'
-      ).join('')
+    pegsLayer.innerHTML = pegs.map(peg =>
+      '<span class="plinko-peg" style="left:' + peg.left + '%;top:' + peg.y + 'px;animation-delay:' + peg.delay + 'ms"></span>'
     ).join('');
 
     function render() {
@@ -279,9 +286,7 @@ function installArcadeGames() {
       let slotIndex = 4;
       const gravity = 1760;
       const damping = .74;
-      const pegRadius = 10;
-      const pegXs = [6, 16, 27, 39, 50, 61, 73, 84, 94].map(value => boardWidth * (value / 100));
-      const pegYs = pegYPositions;
+      const pegRadius = 11;
 
       tokenEl.style.opacity = '1';
       tokenEl.style.left = (x / boardWidth * 100) + '%';
@@ -310,14 +315,14 @@ function installArcadeGames() {
 
         for (let index = 0; index < pegs.length; index += 1) {
           const peg = pegs[index];
-          peg.x = pegXs[peg.left > 90 ? 8 : peg.left > 80 ? 7 : peg.left > 70 ? 6 : peg.left > 60 ? 5 : peg.left > 50 ? 4 : peg.left > 40 ? 3 : peg.left > 30 ? 2 : peg.left > 20 ? 1 : 0];
+          const pegX = boardWidth * (peg.left / 100);
           if (Math.abs(y - peg.y) > 36) continue;
-          const dx = x - peg.x;
+          const dx = x - pegX;
           const dy = y - peg.y;
           const distance = Math.hypot(dx, dy);
           if (distance < pegRadius + 14 && vy > -220) {
             const bounceSide = dx >= 0 ? 1 : -1;
-            x = peg.x + bounceSide * (pegRadius + 16);
+            x = pegX + bounceSide * (pegRadius + 16);
             y = peg.y + pegRadius + 16;
             vx = (Math.abs(vx) + 18 + Math.random() * 18) * bounceSide;
             vy = Math.max(-220, -Math.abs(vy) * .6 - 110);

@@ -898,6 +898,7 @@
   left: 16px;
   height: 5px;
   background: #fff8;
+  z-index: 1;
 }
 
 .plinko-top {
@@ -909,24 +910,26 @@
   font: 700 11px 'Space Grotesk', sans-serif;
   letter-spacing: 2px;
   text-align: center;
+  z-index: 5;
 }
 
 .plinko-pegs {
   position: absolute;
-  inset: 38px 26px 98px;
+  inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
 .plinko-peg {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  background: radial-gradient(circle at 35% 35%, #fff, #d8ebf4 55%, #7a93aa);
-  border: 1px solid #fff9;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: radial-gradient(circle at 32% 28%, #fffef4 0 16%, #ffe89a 18% 38%, #e39b25 42% 72%, #8b4e13 76%);
+  border: 2px solid #fff8;
   border-radius: 50%;
-  box-shadow: 0 2px 0 #0002;
-  animation: plinko-peg-glint 2.8s ease-in-out infinite;
+  box-shadow: 0 2px 0 #67340e, 0 0 0 2px #1b3347a8, 0 0 11px #ffe68c8c;
+  animation: plinko-peg-glint 2.1s ease-in-out infinite;
 }
 
 .plinko-peg.hit {
@@ -954,6 +957,7 @@
   bottom: 16px;
   left: 16px;
   display: grid;
+  z-index: 5;
   grid-template-columns: repeat(9, 1fr);
   gap: 6px;
 }
