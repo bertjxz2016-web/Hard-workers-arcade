@@ -220,13 +220,12 @@ function installArcadeGames() {
     // Board coordinates are shared by the drawing and the collision loop so every
     // big, bright peg is exactly where the falling star can hit it.
     const pegRows = [
-      { y: 126, xs: [50] },
-      { y: 152, xs: [43, 57] },
-      { y: 178, xs: [36, 50, 64] },
-      { y: 204, xs: [29, 43, 57, 71] },
-      { y: 230, xs: [22, 36, 50, 64, 78] },
-      { y: 256, xs: [15, 29, 43, 57, 71, 85] },
-      { y: 282, xs: [10, 23, 36, 50, 64, 77, 90] }
+      { y: 108, xs: [50] },
+      { y: 142, xs: [43, 57] },
+      { y: 176, xs: [36, 50, 64] },
+      { y: 210, xs: [29, 43, 57, 71] },
+      { y: 244, xs: [22, 36, 50, 64, 78] },
+      { y: 278, xs: [15, 29, 43, 57, 71, 85] }
     ];
     const pegs = pegRows.flatMap((row, rowIndex) =>
       row.xs.map((left, columnIndex) => ({
@@ -285,9 +284,10 @@ function installArcadeGames() {
       let slotIndex = 4;
       const gravity = 1760;
       const damping = .74;
-      const pegRadius = 11;
-      const starRadius = 17;
+      const pegRadius = 8;
+      const starRadius = 16;
       const collisionRadius = pegRadius + starRadius;
+      let contactFrames = 0;
 
       tokenEl.style.opacity = '1';
       tokenEl.style.left = (x / boardWidth * 100) + '%';
@@ -304,6 +304,7 @@ function installArcadeGames() {
         // Move in tiny physics steps: this stops a fast star from skipping over a peg.
         const steps = Math.max(1, Math.ceil(Math.max(Math.abs(vx * delta), Math.abs(vy * delta)) / 7));
         const stepDelta = delta / steps;
+        let touchedPeg = false;
         for (let step = 0; step < steps; step += 1) {
           vy += gravity * stepDelta;
           x += vx * stepDelta;
@@ -325,6 +326,7 @@ function installArcadeGames() {
             const dy = y - peg.y;
             const distance = Math.hypot(dx, dy);
             if (distance >= collisionRadius) continue;
+            touchedPeg = true;
 
             // Push the star out along the true contact angle, then reflect its velocity.
             const normalX = distance ? dx / distance : (Math.random() < .5 ? -1 : 1);
@@ -347,6 +349,14 @@ function installArcadeGames() {
             }
             break;
           }
+        }
+
+        // A tiny escape nudge keeps the token rolling if two collisions happen in place.
+        contactFrames = touchedPeg ? contactFrames + 1 : 0;
+        if (contactFrames > 4) {
+          vx += (Math.random() < .5 ? -1 : 1) * 105;
+          vy = Math.max(vy, 150);
+          contactFrames = 0;
         }
 
         const slotWidth = boardWidth / 9;
