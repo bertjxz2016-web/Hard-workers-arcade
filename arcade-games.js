@@ -191,7 +191,7 @@ function installArcadeGames() {
           '<div class="game-status" id="plinkoStatus">Drop a star and let the pegs decide where it lands.</div>' +
           '<div class="game-actions">' +
             '<button class="game-action" id="plinkoDrop" type="button" disabled>DROP STAR</button>' +
-            '<button class="game-action secondary" id="plinkoStart" type="button">START ROUND · 50 ⭐</button>' +
+            '<button class="game-action secondary" id="plinkoStart" type="button">START ROUND · 75 ⭐</button>' +
           '</div>' +
         '</div>' +
       '</section>';
@@ -210,7 +210,7 @@ function installArcadeGames() {
     const highElement = arcadeBox.querySelector('#plinkoHigh');
     const laneLabel = arcadeBox.querySelector('#plinkoLane');
     const laneRewards = [200, 100, 50, 25, 0, 0, 25, 50, 100, 200];
-    const startCost = 50;
+    const startCost = 75;
     const timers = [];
     let active = false;
     let dropsLeft = 8;
@@ -263,7 +263,7 @@ function installArcadeGames() {
       statusElement.textContent = 'Round complete. You won ' + roundStars + ' stars and added +' + payout + ' more stars to your bank.';
       showToast('Plinko Stars paid +' + payout + ' stars!');
       startButton.disabled = false;
-      startButton.textContent = 'PLAY AGAIN · 50 ⭐';
+      startButton.textContent = 'PLAY AGAIN · 75 ⭐';
     }
 
     function dropStar() {
@@ -387,8 +387,8 @@ function installArcadeGames() {
 
     function startRound() {
       if (points < startCost) {
-        statusElement.textContent = 'You need 50 stars to start a Plinko round.';
-        showToast('You need 50 more stars to play Plinko Stars.');
+        statusElement.textContent = 'You need 75 stars to start a Plinko round.';
+        showToast('You need 75 stars to play Plinko Stars.');
         return;
       }
 
