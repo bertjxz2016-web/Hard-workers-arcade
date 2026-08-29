@@ -436,7 +436,7 @@ function installArcadeGames() {
       topbar(true) +
       '<section class="arcade-game">' +
         '<div class="game-intro">' +
-          '<div><div class="kicker">REFLEX / FAST PLAY</div><h2>Air Hockey <span>Blitz</span></h2><p>Block the puck, chase the rebound, and race the clock. In AI mode the opponent reads the puck and in 2-player mode the second paddle uses the keyboard.</p></div>' +
+          '<div><div class="kicker">REFLEX / FAST PLAY</div><h2>Air Hockey <span>Blitz</span></h2><p>Block the puck and chase the rebound. Earn 35 tickets for every goal you score, plus a win bonus.</p></div>' +
           '<div class="game-stats">' +
             '<div class="game-stat"><b id="airPlayerScore">0</b><small>YOU</small></div>' +
             '<div class="game-stat"><b id="airOpponentScore">0</b><small>OPPONENT</small></div>' +
@@ -533,14 +533,17 @@ function installArcadeGames() {
       running = false;
       cancelAnimationFrame(raf);
       clearTimeout(restartTimer);
-      const payout = Math.max(5, playerScore * 18 + Math.max(0, Math.floor(timeLeft * 2)) + Math.max(0, playerScore - opponentScore) * 8);
+      const goalPayout = playerScore * 35;
+      const winBonus = playerScore > opponentScore ? 50 : 0;
+      const sweepBonus = playerScore === 5 && opponentScore === 0 ? 75 : 0;
+      const payout = Math.max(5, goalPayout + winBonus + sweepBonus);
       const high = saveHighScore('air', playerScore);
       awardTickets(payout, 'Air Hockey');
       showToast('Air Hockey finished. ' + playerScore + ' to ' + opponentScore + ' paid +' + payout + ' tickets.');
       arcadeBox.querySelector('#airMode').disabled = false;
       startButton.disabled = false;
       startButton.textContent = 'PLAY AGAIN · 1 TOKEN';
-      statusElement.textContent = 'Final score: ' + playerScore + ' to ' + opponentScore + '. Best score: ' + high + '.';
+      statusElement.textContent = 'Final score: ' + playerScore + ' to ' + opponentScore + '. ' + goalPayout + ' for goals' + (winBonus ? ', +' + winBonus + ' win bonus' : '') + (sweepBonus ? ', +' + sweepBonus + ' shutout bonus' : '') + '. Best score: ' + high + '.';
       render();
     }
 
@@ -658,8 +661,6 @@ function installArcadeGames() {
       running = true;
       playerScore = 0;
       opponentScore = 0;
-      timeLeft = 45;
-      roundStart = performance.now();
       lastFrame = 0;
       playerX = BOARD_WIDTH / 4;
       playerY = BOARD_HEIGHT / 2;
