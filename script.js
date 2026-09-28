@@ -22,8 +22,8 @@ const prizeCatalog = {
   'Tiny Dinosaur': { price: 200, points: 650, emoji: '🦖' },
   'Rainbow Unicorn': { price: 240, points: 800, emoji: '🦄' }
 };
-const pointsPerToken = 900;
-const spinCost = 1100;
+const pointsPerToken = 500;
+const spinCost = 800;
 const spinRewards = [
   { type: 'stars', amount: 200, icon: '⭐', label: '200 STARS' },
   { type: 'tokens', amount: 1, icon: '🪙', label: '1 TOKEN' },
@@ -307,7 +307,7 @@ function updatePointExchangeUI() {
   pointProgressFill.style.width = progress / pointsPerToken * 100 + '%';
   pointRedeemButton.disabled = points < pointsPerToken;
   pointRedeemButton.textContent = points >= pointsPerToken
-    ? 'REDEEM 900 STARS → 1 TOKEN'
+    ? 'REDEEM ' + pointsPerToken + ' STARS → 1 TOKEN'
     : pointsPerToken - points + ' STARS TO GO';
 }
 
@@ -320,7 +320,7 @@ function redeemPointsForToken() {
   points -= pointsPerToken;
   tokens += 1;
   sync();
-  showToast('900 stars exchanged for +1 game token!');
+  showToast(pointsPerToken + ' stars exchanged for +1 game token!');
 }
 
 function exchangePlushie(id) {
@@ -430,10 +430,10 @@ function installEconomyUI() {
   const exchangePanel = document.createElement('div');
   exchangePanel.className = 'point-token-exchange';
   exchangePanel.innerHTML =
-    '<div class="point-token-rate"><span>⭐ 900 STARS</span><strong>→ 1 🪙</strong></div>' +
+    '<div class="point-token-rate"><span>⭐ ' + pointsPerToken + ' STARS</span><strong>→ 1 🪙</strong></div>' +
     '<div class="point-token-progress"><i></i></div>' +
-    '<small class="point-progress-text">0 / 900 STARS</small>' +
-    '<button type="button" disabled>900 STARS TO GO</button>';
+    '<small class="point-progress-text">0 / ' + pointsPerToken + ' STARS</small>' +
+    '<button type="button" disabled>' + pointsPerToken + ' STARS TO GO</button>';
   collectionSection.firstElementChild.append(exchangePanel);
   pointRedeemButton = exchangePanel.querySelector('button');
   pointProgressText = exchangePanel.querySelector('.point-progress-text');
@@ -458,7 +458,7 @@ function updateLuckySpinUI() {
   spinButton.textContent = spinning
     ? 'SPINNING…'
     : points >= spinCost
-      ? 'SPIN · 1100 STARS'
+      ? 'SPIN · ' + spinCost + ' STARS'
       : spinCost - points + ' STARS TO GO';
 }
 
@@ -545,7 +545,7 @@ function installLuckySpin(collectionSection) {
   offer.className = 'spin-wheel-offer';
   offer.innerHTML =
     '<div class="spin-offer-top"><span>🎡</span><div><b>LUCKY SPIN</b><small>Stars, tokens, and exclusive plushies</small></div></div>' +
-    '<button type="button">OPEN WHEEL · 1100 ⭐</button>';
+    '<button type="button">OPEN WHEEL · ' + spinCost + ' ⭐</button>';
   collectionSection.firstElementChild.append(offer);
 
   spinModal = document.createElement('div');
@@ -557,7 +557,7 @@ function installLuckySpin(collectionSection) {
       '<button class="spin-close" type="button" aria-label="Close lucky spin">×</button>' +
       '<div class="kicker">04 / LUCKY SPIN</div>' +
       '<h2 id="spinTitle">Take a chance.</h2>' +
-      '<p>Each spin costs 1,100 stars. Win stars, game tokens, or an exclusive plushie.</p>' +
+      '<p>Each spin costs ' + spinCost + ' stars. Win stars, game tokens, or an exclusive plushie.</p>' +
       '<div class="spin-balance">YOUR STARS <b id="spinStarBalance">0</b> ⭐</div>' +
       '<div class="wheel-stage">' +
         '<div class="wheel-pointer" aria-hidden="true"></div>' +
@@ -568,7 +568,7 @@ function installLuckySpin(collectionSection) {
         '</div>' +
         '<div class="wheel-hub" aria-hidden="true">★</div>' +
       '</div>' +
-      '<button class="spin-action" id="spinAction" type="button">SPIN · 1100 STARS</button>' +
+      '<button class="spin-action" id="spinAction" type="button">SPIN · ' + spinCost + ' STARS</button>' +
       '<div class="spin-status" id="spinStatus" aria-live="polite">The prize stays secret until the wheel stops.</div>' +
     '</div>';
   document.body.append(spinModal);
