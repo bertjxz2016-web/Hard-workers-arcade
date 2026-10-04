@@ -293,9 +293,11 @@ function installArcadeGames() {
       render();
 
       const tokenEl = token;
-      const boardRect = board.getBoundingClientRect();
-      const boardWidth = boardRect.width || 620;
-      const boardHeight = boardRect.height || 390;
+      // Use the board's inner drawing area. getBoundingClientRect() includes
+      // the thick outer border, but the peg layer and token are positioned
+      // inside it; mixing those coordinate spaces creates an invisible offset.
+      const boardWidth = board.clientWidth || 620;
+      const boardHeight = board.clientHeight || 390;
       let x = boardWidth * 0.5;
       let y = 34;
       let vx = (Math.random() < .5 ? -14 : 14);
