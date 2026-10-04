@@ -516,6 +516,8 @@ function installArcadeGames() {
     let playerVY = 0;
     let opponentVX = 0;
     let opponentVY = 0;
+    let aiTargetY = BOARD_HEIGHT / 2;
+    let aiThinkTimer = 0;
     let puck = { x: BOARD_WIDTH / 2, y: BOARD_HEIGHT / 2, vx: 260, vy: 86 };
     const keys = { w: false, s: false, a: false, d: false, up: false, down: false, left: false, right: false };
     const pointerActive = { value: false };
@@ -599,10 +601,26 @@ function installArcadeGames() {
       playerY = clamp(playerY + playerVY * delta, PADDLE_RADIUS, BOARD_HEIGHT - PADDLE_RADIUS);
 
       if (mode === 'ai') {
-        const pursuitX = puck.vx > 0 ? puck.x : RIGHT_LIMIT - 70;
-        const pursuitY = puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2;
-        opponentVX = opponentVX * 0.82 + clamp(pursuitX - opponentX, -230, 230) * 0.18;
-        opponentVY = opponentVY * 0.82 + clamp(pursuitY - opponentY, -220, 220) * 0.18;
+        // Give the player a fair opening: the AI reacts in steps, tracks more
+        // slowly, and aims slightly off the puck instead of being perfect.
+        aiThinkTimer -= delta;
+        if (aiThinkTimer <= 0) {
+          aiThinkTimer = .18;
+          const reactionOffset = puck.vx > 0
+            ? (puck.vy >= 0 ? -48 : 48)
+            : 0;
+          aiTargetY = clamp(
+            (puck.vx > 0 ? puck.y : BOARD_HEIGHT / 2) + reactionOffset,
+            PADDLE_RADIUS,
+            BOARD_HEIGHT - PADDLE_RADIUS
+          );
+        }
+
+        const pursuitX = puck.vx > 0 ? puck.x : RIGHT_LIMIT - 100;
+        opponentVX = opponentVX * 0.90 + clamp(pursuitX - opponentX, -150, 150) * 0.10;
+        opponentVY = opponentVY * 0.90 + clamp(aiTargetY - opponentY, -150, 150) * 0.10;
+        opponentVX = clamp(opponentVX, -170, 170);
+        opponentVY = clamp(opponentVY, -170, 170);
       } else {
         const opponentInputVX = ((keys.left ? -1 : 0) + (keys.right ? 1 : 0)) * 760;
         const opponentInputVY = ((keys.up ? -1 : 0) + (keys.down ? 1 : 0)) * 720;
@@ -689,6 +707,8 @@ function installArcadeGames() {
       playerVY = 0;
       opponentVX = 0;
       opponentVY = 0;
+      aiTargetY = BOARD_HEIGHT / 2;
+      aiThinkTimer = 0;
       resetPuck(1);
       startButton.disabled = true;
       modeButton.disabled = true;
@@ -1310,7 +1330,7 @@ function installArcadeGames() {
       topbar(true) +
       '<section class="arcade-game">' +
         '<div class="game-intro">' +
-          '<div><div class="kicker">DROP / PUSH / WIN</div><h2>Coin <span>Push</span></h2><p>Choose a lane, drop coins, and let the shelf shove prizes closer to the edge. Big pushes and prize falls pay tickets immediately.</p></div>' +
+          '<div><div class="kicker">DROP / PUSH / WIN</div><h2>Coin <span>Push</span></h2><p>Choose a lane, drop coins, and let the shelf shove prizes closer to the edge. Each push has a 50% shelf-only result, 20% shelf-and-prize result, or 30% prize-only result.</p></div>' +
           '<div class="game-stats">' +
             '<div class="game-stat"><b id="coinDrops">10</b><small>DROPS LEFT</small></div>' +
             '<div class="game-stat"><b id="coinTickets">0</b><small>ROUND TICKETS</small></div>' +
@@ -1368,13 +1388,39 @@ function installArcadeGames() {
       ]
     ];
     const lanes = laneTemplates.map(lane => lane.map(item => ({ ...item })));
-    const lanePressure = [0, 0, 0];
     const timers = [];
     let active = false;
     let selectedLane = 1;
     let dropsLeft = 10;
     let roundTickets = 0;
     let dropping = false;
+
+    function moveEdgePrizeTowardDrop(lane) {
+      let prizeIndex = -1;
+      for (let index = lane.length - 1; index >= 0; index -= 1) {
+        if (lane[index].type === 'prize') {
+          prizeIndex = index;
+          break;
+        }
+      }
+
+      if (prizeIndex < 0) return null;
+      if (prizeIndex === lane.length - 1) return lane.splice(prizeIndex, 1)[0];
+
+      const nextIndex = prizeIndex + 1;
+      [lane[prizeIndex], lane[nextIndex]] = [lane[nextIndex], lane[prizeIndex]];
+      return null;
+    }
+
+    function removeEdgeCoin(lane) {
+      for (let index = lane.length - 1; index >= 0; index -= 1) {
+        if (lane[index].type === 'coin') {
+          lane.splice(index, 1);
+          return true;
+        }
+      }
+      return false;
+    }
 
     function prizeClass(item) {
       return item.type === 'prize' ? ' prize' : '';
@@ -1423,12 +1469,30 @@ function installArcadeGames() {
       dropsLeft -= 1;
 
       const lane = lanes[selectedLane];
+      const outcomeRoll = Math.random();
+      const laneMoves = outcomeRoll < .70;
+      const prizeMoves = outcomeRoll >= .50;
+      const outcomeText = laneMoves && prizeMoves
+        ? 'Shelf and prize moved together.'
+        : laneMoves
+          ? 'The shelf moved, but the prize held.'
+          : 'Only the prize slid forward.';
+
       lane.unshift({ type: 'coin' });
-      lanePressure[selectedLane] += 1;
-      const shouldAdvance = lanePressure[selectedLane] >= 2;
-      const fallen = shouldAdvance && lane.length > 11 ? lane.pop() : null;
-      if (shouldAdvance) {
-        lanePressure[selectedLane] = 0;
+      let fallen = null;
+
+      if (laneMoves) {
+        if (prizeMoves) {
+          fallen = lane.pop();
+        } else if (!removeEdgeCoin(lane)) {
+          lane.shift();
+        }
+      } else {
+        lane.shift();
+      }
+
+      if (prizeMoves && !fallen) {
+        fallen = moveEdgePrizeTowardDrop(lane);
       }
       render();
 
@@ -1443,11 +1507,11 @@ function installArcadeGames() {
       timers.push(setTimeout(() => {
         if (fallen && fallen.type === 'prize') {
           roundTickets += fallen.tickets;
-          tray.textContent = fallen.name + ' fell off the edge for +' + fallen.tickets + ' tickets.';
-          statusElement.textContent = fallen.name + ' was pushed off the shelf. That one counted immediately.';
+          tray.textContent = outcomeText + ' ' + fallen.name + ' fell off the edge for +' + fallen.tickets + ' tickets.';
+          statusElement.textContent = fallen.name + ' fell off the shelf. ' + outcomeText;
         } else {
-          tray.textContent = 'The shelf shifted. Keep the pressure on the lane.';
-          statusElement.textContent = 'Coin landed cleanly. The shelf moved a little farther forward.';
+          tray.textContent = outcomeText + ' Keep the pressure on the lane.';
+          statusElement.textContent = 'Coin landed cleanly. ' + outcomeText;
         }
         render();
         dropping = false;
@@ -1469,7 +1533,6 @@ function installArcadeGames() {
       roundTickets = 0;
       lanes.forEach((lane, laneIndex) => {
         lane.splice(0, lane.length, ...laneTemplates[laneIndex].map(item => ({ ...item })));
-        lanePressure[laneIndex] = 0;
       });
       startButton.disabled = true;
       dropButton.disabled = false;
