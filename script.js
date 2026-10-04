@@ -1,3 +1,15 @@
+// Start every browser launch with a clean arcade session. Only remove this
+// app's own namespaced data so unrelated sites in the same browser are safe.
+(function resetArcadeOnOpen() {
+  const appPrefixes = ['taskArcade', 'pixelParty'];
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key && appPrefixes.some(prefix => key.startsWith(prefix))) {
+      localStorage.removeItem(key);
+    }
+  }
+})();
+
 const savedTokenValue = localStorage.getItem('taskArcadeTokens');
 const savedTokens = Number(savedTokenValue);
 let tokens = savedTokenValue !== null && Number.isFinite(savedTokens) && savedTokens >= 0 ? savedTokens : 12;
