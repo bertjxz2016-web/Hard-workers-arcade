@@ -173,7 +173,7 @@ function installArcadeGames() {
       topbar(true) +
       '<section class="arcade-game">' +
         '<div class="game-intro">' +
-          '<div><div class="kicker">STARS / DROP & BOUNCE</div><h2>Plinko <span>Stars</span></h2><p>Spend 75 stars for one ball, then watch it bounce into a slot that pays stars back. The 200-star edge slots are extra narrow.</p></div>' +
+          '<div><div class="kicker">STARS / DROP & BOUNCE</div><h2>Plinko <span>Stars</span></h2><p>Spend 75 stars for one ball, then watch it bounce into a slot that pays stars back. The 150-star edge slots are extra narrow.</p></div>' +
           '<div class="game-stats">' +
             '<div class="game-stat"><b id="plinkoDrops">1</b><small>BALL</small></div>' +
             '<div class="game-stat"><b id="plinkoStars">0</b><small>ROUND STARS</small></div>' +
