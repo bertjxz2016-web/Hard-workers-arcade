@@ -209,7 +209,7 @@ function installArcadeGames() {
     const starsElement = arcadeBox.querySelector('#plinkoStars');
     const highElement = arcadeBox.querySelector('#plinkoHigh');
     const laneLabel = arcadeBox.querySelector('#plinkoLane');
-    const laneRewards = [200, 100, 50, 25, 0, 0, 25, 50, 100, 200];
+    const laneRewards = [150, 100, 50, 25, 0, 0, 25, 50, 100, 150];
     const slotWeights = [.45, 1, 1, 1, 1, 1, 1, 1, 1, .45];
     const startCost = 75;
     const timers = [];
